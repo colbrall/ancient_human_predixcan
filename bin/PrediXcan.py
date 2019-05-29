@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # Python 2.4
+# modified by Laura Colbran to fix ref/alt bug Nov. 2017
 
 import argparse
 from collections import defaultdict
