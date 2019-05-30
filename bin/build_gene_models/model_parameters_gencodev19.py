@@ -4,7 +4,7 @@ import os
 # Change these variables when adapting for different analyses.
 
 # List of identifiers for each database you'll make:
-STUDY_NAMES = ['Muscle_Skeletal']
+STUDY_NAMES = ['Muscle_Skeletal','Ovary','Whole_Blood']
 # File names for gene and snp annotation:
 GENE_ANNOTATION_FN = 'gencode.v19.genes.patched_contigs.gtf.gz'
 SNP_ANNOTATION_FN = 'GTEx_OMNI_genot_1KG_imputed_var_info4_maf01_CR95_CHR_POSb37_ID_REF_ALT_release_v6.txt.gz'
@@ -38,8 +38,8 @@ GENOTYPE_INTER_PREFIX = map(lambda x: x[:-7], GENOTYPE_FNS)
 
 # Define directories---------------------------------------------------/
 INPUT_DIR = '../../'
-INTER_DIR = '../../test/'
-OUTPUT_DIR = '../../test/models/'
+INTER_DIR = '../../data/gtex_data/'
+OUTPUT_DIR = '../../data/models/'
 GENE_ANN_DIR = 'phe000006.v2.GTEx_RNAseq.marker-info.MULTI/'
 SNP_ANN_DIR = '/dors/capra_lab/data/predixcan_models/gtex_v6_1kg/'
 SNP_ANN_INTER_DIR = 'snp_ann/'
