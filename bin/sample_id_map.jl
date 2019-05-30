@@ -98,6 +98,7 @@ function main()
                  reich_id = join(problems,source,on=:master_id=>:id_short,kind=:inner,makeunique=true)[:master_id]))
     problems = join(problems,id_map,on=:master_id => :reich_id,kind=:anti)
     println("$(nrow(id_map)) in id_map, $(nrow(problems)) in problems")
+    CSV.write("data/reich_ancient_humans/mapped_sample_ids.csv", unique(id_map);delim=',')
 end
 
 main()

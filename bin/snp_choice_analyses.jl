@@ -10,10 +10,18 @@ using ArgParse
 using CSV
 using DataFrames
 using GZip
-using StatsPlots
+using Plots
+using Seaborn
 using StatsBase
 using HypothesisTests
-pyplot(grid = false,leg = false)
+
+#set plotting defaults
+default(color=:black,leg=false,grid=false,fontfamily="arial")
+
+Seaborn.set(style="white", palette="muted")
+set_style(Dict("font.family" =>["arial"]))
+box("off")
+
 
 EUROPE = ["Austria","Belgium","Bulgaria","Croatia","Czech Republic","Denmark",
             "Estonia","Finland","France","","Germany","Great Britain",
@@ -40,20 +48,20 @@ function parse_commandline()
     s = ArgParseSettings()
 
     @add_arg_table s begin
-        "--anno_file","-a"
-            help = "path to sample annotation file"
-            arg_type = String
-
         "--summary"
             help = "to calculate summary stats for individuals in annotation file"
             action = :store_true
+
+        "--anno_file","-a"
+            help = "path to sample annotation file"
+            arg_type = String
 
         "--snp_coverage"
             help = "for each SNP, calculates coverage metric across samples, then summmarises and outputs"
             action = :store_true
 
-        "--geno_file","-g"
-            help = "dosage file containing genotypes for samples. required for snp_coverage."
+        "--geno_dir","-g"
+            help = "directory containing dosage files for samples. required for snp_coverage."
             arg_type = String
 
         "--ind_file","-i"
@@ -65,8 +73,25 @@ function parse_commandline()
             action = :store_true
 
         "--snp_file","-s"
-            help = "bed file of SNPs containing their coverage rate and genotype count. Output of snpCoverage()"
+            help = "bed file of SNPs containing their coverage rate and genotype count. Output of snpCoverage() or subset of it"
             arg_type = String
+
+        "--sample_summary"
+            help = "if you want to run summary stats on samples based on a given set of SNPs of interest and a threshold for missing data"
+            action = :store_true
+
+        "--map_file","-m"
+            help = "csv file containing ID mapping. output of sample_id_map.jl."
+            arg_type = String
+
+        "--info_file","-n"
+            help = "file containing further sample info. aDNA_sources.csv usually."
+            arg_type = String
+
+        "--threshold","-t"
+            help = "highest proportion of missing SNPs allowed for a sample to be considered."
+            arg_type = Float64
+            default = 1.0
     end
     return parse_args(s)
 end
@@ -126,36 +151,81 @@ function parseAnnoFile(anno_file::String)
     return inds
 end
 
+# calculates coverage rate for a SNP
+function coverageRate(genotypes::Array{SubString{String},1},num_snps::Array{Int64,1})
+    rate = sum(num_snps[findall(!isequal("NA"),genotypes)])
+    return rate
+end
+
+# counts number of samples with calls for a SNP
+function countSamples(genotypes::Array{SubString{String}, 1})
+    ct = length(findall(!isequal("NA"),genotypes))
+    return ct
+end
+
+# reads in .fam file and returns ids
+function indArray(ind_file::String)
+    ids = Array{String,1}()
+    for line in readlines(open(ind_file,"r"))
+        push!(ids,String(split(line,' ')[2]))
+    end
+    return ids
+end
+
+# boolean whether the genotyped snps in a sample is a high enough proportion to pass threshold
+function passThresh(count::Int64,total::Int64,thresh::Float64)
+    if count/total < 1-thresh
+        return false #if proportion called is fewer than necessary
+    else
+        return true
+    end
+end
+
+# returns array of :ind_ids passing a threshold of proportion of SNPs covered
+function filterThresh(snps::String,geno_dir::String,ind_file::String,thresh::Float64)
+    snp_ids = CSV.read(snps;delim='\t')[:rsid]
+    inds = indArray(ind_file)
+    counts = zeros(Int64,length(inds),1)
+    for item in readdir(geno_dir)
+        if !endswith(item,"txt.gz") continue end
+        println(item)
+        for line in readlines(GZip.open("$geno_dir$item"))
+            if !(String(split(line," ")[2]) in snp_ids) continue end #skip snps not of interest
+            genotypes = split(line,' ')[7:end]
+            counts[findall(!isequal("NA"),genotypes)] .+= 1
+        end
+    end
+    return inds[findall(i -> passThresh(i,length(snp_ids),thresh),counts)]
+end
+
+# maps sample ids in my Spreadsheet O' Knowledge to those in annotation file
+# also joins SoK to annotation file by that map
+function mapSampleIDs(df::DataFrames.DataFrame,map_file::String,info_file::String)
+    map_ids = CSV.read(map_file)
+    df = join(df,map_ids,on=:master_id => :reich_id,kind=:inner)
+    df = join(df,CSV.read(info_file),kind=:inner,on=:colbran_id => :sample,makeunique=true)
+    return df
+end
+
 #summary stats of samples
 function summaryInds(anno_file::String)
-    #anno_file = "../../data/ancient_dna/reich_compilation/v37/v37.2.1240K.clean4.anno"
+    anno_file = "../../data/ancient_dna/reich_compilation/v37/v37.2.1240K.clean4.anno"
     anno = parseAnnoFile(anno_file)
     println("Total Ancient Human Samples: $(nrow(anno))")
     println("Number Reich Lab considered 'PASS': $(nrow(anno[anno[:assessment].== "yes",:]))")
     println("Number they considered seriously questionable: $(nrow(anno[anno[:assessment] .== "no",:]))")
     anno = anno[anno[:assessment] .!= "no",:]
     println("Number of unique individuals: $(length(unique(anno[:master_id])))")
-    CSV.write("data/reich_ancient_humans/ancient_human_ids.txt",DataFrames.DataFrame(id = anno[:ind_id]); delim='\t')
     println("\nNumber with date information: $(nrow(anno[anno[:date] .> 0,:]))")
     println("Number with coverage information: $(nrow(anno[anno[:coverage] .> 0,:]))\n")
     describe(anno[:date])
-    dist_plot = histogram(anno[:date], nbins = 100,
-                    xlabel = "Date (years BP)",
-                    ylabel = "Count",
-                    color = [:black])
-    savefig(dist_plot, "sample_date_distribution.pdf")
+    age_plot = histogram(anno[:date], nbins=100,xlabel="Age (years BP)",ylabel="Number of Samples")
+
     describe(anno[:coverage])
-    dist_plot = histogram(anno[:coverage], nbins = 100,
-                    xlabel = "Coverage",
-                    ylabel = "Count",
-                    color = [:black])
-    savefig(dist_plot, "sample_coverage_distribution.pdf")
+    cov_plot = histogram(anno[:coverage],nbins=100,xlabel="Coverage",ylabel="Number of Samples")
+
     describe(anno[:num_snps])
-    dist_plot = histogram(anno[:num_snps], nbins = 100,
-                    xlabel = "Number Autosomal SNPs",
-                    ylabel = "Count",
-                    color = [:black])
-    savefig(dist_plot, "sample_numsnps_distribution.pdf")
+    snp_plot = histogram(anno[:num_snps], nbins=100, ylabel="Number of Samples",xlabel= "Number Autosomal SNPs Called")
 
     println("\nRho: $(corspearman(anno[:coverage],anno[:num_snps]))")
     println(OneSampleZTest(atanh(corspearman(anno[:coverage],anno[:num_snps])),1, nrow(anno)))
@@ -164,19 +234,14 @@ function summaryInds(anno_file::String)
     for cont in unique(anno[:continent])
         println("Num. samples in $cont: $(nrow(anno[anno[:continent] .== cont,:]))")
     end
-end
+    for type in unique(anno[:type])
+        println("Num. $type samples: $(nrow(anno[anno[:type] .== type,:]))")
+    end
 
-# calculates coverage rate for a SNP
-function coverageRate(genotypes::Array{SubString{String},1},num_snps::Array{Int64,1})
-    #println(genotypes)
-    rate = sum(num_snps[findall(!isequal("NA"),genotypes)])
-    return rate
-end
-
-# counts number of samples with calls for a SNPs
-function countSamples(genotypes::Array{SubString{String}, 1})
-    ct = length(findall(!isequal("NA"),genotypes))
-    return ct
+    CSV.write("data/reich_ancient_humans/ancient_human_ids.txt",DataFrames.DataFrame(id = anno[:ind_id]); delim='\t')
+    Plots.savefig(cov_plot, "sample_coverage_distribution.pdf")
+    Plots.savefig(age_plot,"sample_date_distribution.pdf")
+    Plots.savefig(snp_plot, "sample_numsnps_distribution.pdf")
 end
 
 # calculates and writes out coverage rate: Sum(Num_Snps) across individuals that
@@ -184,9 +249,11 @@ end
 function snpCoverage(geno_dir::String,anno_file::String,ind_file::String)
     #anno_file = "../../data/ancient_dna/reich_compilation/v37/v37.2.1240K.clean4.anno"
     #ind_file = "data/reich_ancient_humans/kept_ancient_humans.fam"
-    snps = DataFrames.DataFrame(chr = String[],pos = Int64[],rsid = String[],coverage_rate = Int64[],gt_count = Int64[])
+    snps = DataFrames.DataFrame(chr = String[],pos = Int64[],rsid = String[],
+                                        coverage_rate = Int64[],gt_count = Int64[])
     samples = parseAnnoFile(anno_file)
-    samples = join(deletecols!(CSV.read(ind_file;delim=' ',header=[:b,:ind_id,:x,:y,:a,:z],allowmissing=:none),[:a,:b,:x,:y,:z]),
+    samples = join(deletecols!(CSV.read(ind_file;delim=' ',
+                    header=[:b,:ind_id,:x,:y,:a,:z],allowmissing=:none),[:a,:b,:x,:y,:z]),
                     samples,kind=:inner,on=:ind_id) #filter to just inds of interest
     samples[:num_snps]
     for item in readdir(geno_dir)
@@ -207,33 +274,59 @@ function snpSummary(snp_file::String)
     snps = CSV.read(snp_file;delim='\t')
     println("Coverage Rate:")
     describe(snps[:coverage_rate])
-    dist_plot = histogram(snps[:coverage_rate], nbins = 100,
-                    xlabel = "Coverage Rate",
-                    ylabel = "Number of SNPs",
-                    color = [:black])
-    savefig(dist_plot, "1240k_snps_coverage_rate.pdf")
+    dist_plot = histogram(snps[:coverage_rate], nbins = 100,xlabel = "Coverage Rate",ylabel = "Number of SNPs")
+    Plots.savefig(dist_plot, "1240k_snps_coverage_rate.pdf")
     println("\nGenotype Count:")
     describe(snps[:gt_count])
-    dist_plot = histogram(snps[:gt_count], nbins = 100,
-                    xlabel = "Number of Samples with Genotype",
-                    ylabel = "Number of SNPs",
-                    color = [:black])
-    savefig(dist_plot, "1240k_snps_genotype_count.pdf")
+    dist_plot = histogram(snps[:gt_count], nbins = 100,xlabel = "Number of Samples with Genotype",ylabel = "Number of SNPs")
+    Plots.savefig(dist_plot, "1240k_snps_genotype_count.pdf")
 end
 
-# maps sample ids in my Spreadsheet O' Knowledge to those in annotation file
-function mapSampleIDs()
-    println("Woops not implemented yet!")
-    # anno id of interest is master_id
-end
-
-function sampleSummary()
-    println("Woops not implemented yet!")
-    # read in list of samples with enough coverage in SNPs we care about
-    # join to anno_file for info
-    # map ids to ids in aDNA_sources
-    # join to aDNA_sources
-    # make plots corinne described-- split by location, with lifestyle and yearBP
+function sampleSummary(anno_file::String,snp_file::String, geno_dir::String,ind_file::String,threshold::Float64,info_file::String,map_file::String)
+    anno_file = "../../data/ancient_dna/reich_compilation/v37/v37.2.1240K.clean4.anno"
+    map_file =  "data/reich_ancient_humans/mapped_sample_ids.csv"
+    info_file = "data/aDNA_sources.csv"
+    anno = parseAnnoFile(anno_file)
+    anno = anno[anno[:assessment] .!= "no",:]
+    println("Number of Samples at Start: $(nrow(anno))")
+    passed = filterThresh(snp_file,geno_dir,ind_file,threshold)
+    anno = anno[[in(id,passed) for id in anno[:ind_id]],:]
+    println("Number of Samples passing coverage threshold: $(nrow(anno))")
+    anno = mapSampleIDs(anno,map_file,info_file)
+    println("Number of Samples successfully mapped: $(nrow(anno))")
+    anno[anno[:lifestyle] .== "nomadic/pastoral",:lifestyle] = "Past."
+    anno[anno[:lifestyle] .== "pastoral",:lifestyle] = "Past."
+    anno[anno[:lifestyle] .== "Agriculture",:lifestyle] = "Agri."
+    anno[anno[:lifestyle] .== "Hunter-gatherer",:lifestyle] = "HG"
+    # println(names(anno))
+    # println(first(anno,2))
+    f, axes = Seaborn.subplots(2, 3, figsize=(10,7), sharey="all")
+    x = y = 2
+    plot_num = 1
+    for loc in unique(anno[:continent])
+        # println(loc)
+        life_plot = swarmplot(anno[anno[:continent] .== loc,:lifestyle],anno[anno[:continent] .== loc,:date],
+                            order=["HG","Past.","Agri.","NA"],ax=axes[x, y])
+        life_plot.set_title("$(loc) (N = $(nrow(anno[anno[:continent] .== loc,:])))")
+        #life_plot.set_xlabel("Lifestyle")
+        life_plot.set_ylabel("Age (Years BP)")
+        plot_num += 1
+        x = plot_num%2 + 1
+        y = plot_num%3 + 1
+    end
+    Seaborn.savefig("lifestyle_age_by_continent.pdf")
+    clf()
+    
+    f, axes = Seaborn.subplots(1, 2, figsize=(10,7), sharey="all")
+    plot_num = 1
+    for loc in unique(anno[:region])
+        life_plot = swarmplot(anno[anno[:region] .== loc,:lifestyle],anno[anno[:region] .== loc,:date],
+                            order=["HG","Past.","Agri.","NA"],ax=axes[1, plot_num])
+        life_plot.set_title("$(loc) (N = $(nrow(anno[anno[:region] .== loc,:])))")
+        life_plot.set_ylabel("Age (Years BP)")
+    end
+    Seaborn.savefig("lifestyle_age_by_region.pdf")
+    clf()
 end
 
 function main()
@@ -242,10 +335,14 @@ function main()
         summaryInds(args["anno_file"])
     end
     if args["snp_coverage"]
-        snpCoverage(args["geno_file"],args["anno_file"],args["ind_file"])
+        snpCoverage(args["geno_dir"],args["anno_file"],args["ind_file"])
     end
     if args["snp_summary"]
         snpSummary(args["snp_file"])
+    end
+    if args["sample_summary"]
+        sampleSummary(args["anno_file"],args["snp_file"],args["geno_dir"],args["ind_file"],
+                        args["threshold"],args["info_file"],args["map_file"])
     end
 end
 
