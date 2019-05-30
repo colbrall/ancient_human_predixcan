@@ -9,6 +9,7 @@
 
 # modified by Laura Colbran (1/7/2018) to normalize and split up GTEx expression data
 # by tissue, and also to conduct some QC based on read count
+# same as the regular script, with the addition of crap-tons of intermediate output files
 
 library('readr')
 
@@ -30,9 +31,10 @@ quantileNormalisation <- function(df){
 
 # match ids to tissue names based on sample attributes file
 idsList <- function(file_path) {
+    print("matching ids to tissue")
     annotations <- read_delim(gzfile(file_path), "\t", escape_double = FALSE, col_names = TRUE, trim_ws = TRUE,
           comment = "#",col_types = do.call(cols_only, list(SAMPID = col_character(), SMTSD= col_character(), SMAFRZE = col_character())))
-    
+
     tiss_dict <- list()
     tiss_names <- unique(annotations$SMTSD)
     for (i in 1:length(tiss_names)) {
@@ -43,7 +45,7 @@ idsList <- function(file_path) {
         tiss <- gsub(" ", "_", tiss,fixed = TRUE)# remove whitespace
         tiss <- gsub("(", "", tiss,fixed = TRUE)
         tiss <- gsub(")", "", tiss,fixed = TRUE)
-        
+
         ids <- annotations[!is.na(annotations$SMTSD) & annotations$SMTSD == tiss_names[i],]$SAMPID
         ids <- ids[!is.na(ids)]
         for (j in 1:length(ids)) {
@@ -56,12 +58,13 @@ idsList <- function(file_path) {
 
 #filter individual ids and genes by reads
 readFilter <- function(tiss_name, ids, read_path) {
+    print("filtering by reads...")
     reads <- read.table(read_path, stringsAsFactors = FALSE,
         header = TRUE, row.names = 1,skip=2)
-    
+
     write.table(row.names(reads),paste0("starting_gene_list_",tiss_name),quote=F,row.names=F,col.names=F)
     reads <- reads[intersect(names(reads),ids)] #extract samples for tissue
-    
+
     # summarize across aliquots from same person
     all_ids <- sort(names(reads))#so samples from same person are next to each other
     ids_to_keep <- c(all_ids[1])
@@ -85,21 +88,21 @@ readFilter <- function(tiss_name, ids, read_path) {
         if (length(read_list[which(read_list >= 6)]) >= 10) {
             genes <- c(genes, row.names(reads)[i])
         }
-    }    
+    }
     write.table(genes,paste0("genes_kept_after_read_filter_",tiss_name),quote=F,row.names=F,col.names=F)
     return(list(names(reads),genes))
 }
 
 makeOutput <- function(tiss_name,targets, rpkm_path, cov_path, out_dir) {
-    #print("writing output...")
+    print("writing output...")
     rpkm <- read.table(rpkm_path, stringsAsFactors = FALSE,
         header = TRUE, skip=2)
-    
+
     # set rownames to Gene ids, remove non-expression data columns
     rownames(rpkm) <- rpkm[,1]
     rpkm[,-c(1,2)]
-    
-    # filter to target ids and genes identified based on readFilter    
+
+    # filter to target ids and genes identified based on readFilter
     rpkm <- rpkm[intersect(names(rpkm),unlist(targets[[1]]))]
     rpkm <- subset(rpkm, row.names(rpkm) %in% targets[[2]])
     write.table(names(rpkm),paste0("ids_filtered_before_rpkm_",tiss_name),quote=F,row.names=F,col.names=F)
@@ -111,15 +114,15 @@ makeOutput <- function(tiss_name,targets, rpkm_path, cov_path, out_dir) {
         if (length(rpkm_list[which(rpkm_list > 0.1)]) >= 10) {
             genes <- c(genes, row.names(rpkm)[i])
         }
-    }    
+    }
     write.table(genes,paste0("genes_should_be_filtered_0.1rpkm_",tiss_name),quote=F,row.names=F,col.names=F)
     rpkm <- subset(rpkm, row.names(rpkm) %in% genes)
     write.table(row.names(rpkm),paste0("genes_filtered_after0.1rpkm_",tiss_name),quote=F,row.names=F,col.names=F)
-    #print("Normalizing....")
+    print("Normalizing....")
     # "Expression values were quantile normalized to the average empirical distribution observed across samples."
     # function defined above
     rpkm <- quantileNormalisation(rpkm)
-    
+
     # "For each gene, expression values were inverse quantile normalized to a standard normal distribution across samples."
     # command from eric's link (pg18): https://media.nature.com/original/nature-assets/nature/journal/v490/n7419/extref/nature11401-s1.pdf
     rpkm <- t(rpkm)
@@ -127,14 +130,14 @@ makeOutput <- function(tiss_name,targets, rpkm_path, cov_path, out_dir) {
         norm_dist <- qnorm((rank(rpkm[,i],na.last="keep")-0.5)/sum(!is.na(rpkm[,i])))
         rpkm[,i] <- norm_dist
     }
-    
+
      # truncate ind IDs for matching to genotype
     ids <- row.names(rpkm)
     for (i in 1:length(ids)) {
         ids[i] <- paste(strsplit(ids[i],'[.]')[[1]][1:2],collapse = "-")
     }
-    row.names(rpkm) <- ids             
-    
+    row.names(rpkm) <- ids
+
     # Correct for covariates if they were provided
     if (!is.na(cov_path)) {
        cov_files <- list.files(cov_path)
@@ -184,4 +187,3 @@ for (tiss in names(tissue_ids)) {
     targets <- readFilter(tiss, tissue_ids[[tiss]],readfile)
     makeOutput(tiss,targets,rpkmfile,covariatepath,out_dir)
 }
-
