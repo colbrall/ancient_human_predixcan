@@ -48,7 +48,7 @@ function main()
         problems[i,:sk_short] = split(problems[i,:skeleton_id],", ")[1]
     end
     id_map = vcat(id_map,DataFrames.DataFrame(colbran_id = join(source,problems,on=:sample => :sk_short,kind=:inner,makeunique=true)[:sample],
-                 reich_id = join(problems,source,on=:sk_short => :sample,kind=:inner,makeunique=true)[:master_id]))
+                 reich_id = join(source,problems,on=:sample => :sk_short,kind=:inner,makeunique=true)[:master_id]))
     problems = join(problems,id_map,on=:master_id => :reich_id,kind=:anti)
     println("$(nrow(id_map)) in id_map, $(nrow(problems)) in problems")
 #   joins where my id matched a skeleton id, split by a comma, different order than previous
@@ -56,7 +56,7 @@ function main()
         problems[i,:sk_short] = split(problems[i,:skeleton_id],", ")[end]
     end
     id_map = vcat(id_map,DataFrames.DataFrame(colbran_id = join(source,problems,on=:sample => :sk_short,kind=:inner,makeunique=true)[:sample],
-                  reich_id = join(problems,source,on=:sk_short => :sample,kind=:inner,makeunique=true)[:master_id]))
+                  reich_id = join(source,problems,on=:sample => :sk_short,kind=:inner,makeunique=true)[:master_id]))
     problems = join(problems,id_map,on=:master_id => :reich_id,kind=:anti)
     println("$(nrow(id_map)) in id_map, $(nrow(problems)) in problems")
 #   ind_id was a modified version of skeleton id: "_" different position
@@ -64,12 +64,12 @@ function main()
         problems[i,:sk_short] = split(problems[i,:skeleton_id],"_")[end]
     end
     id_map = vcat(id_map,DataFrames.DataFrame(colbran_id = join(source,problems,on=:sample => :sk_short,kind=:inner,makeunique=true)[:sample],
-                  reich_id = join(problems,source,on=:sk_short=>:sample,kind=:inner,makeunique=true)[:master_id]))
+                  reich_id = join(source,problems,on=:sample => :sk_short,kind=:inner,makeunique=true)[:master_id]))
     problems = join(problems,id_map,on=:master_id => :reich_id,kind=:anti)
     println("$(nrow(id_map)) in id_map, $(nrow(problems)) in problems")
 #   sample id == :ind_id
     id_map = vcat(id_map,DataFrames.DataFrame(colbran_id = join(source,problems,on=:sample => :ind_id,kind=:inner,makeunique=true)[:sample],
-                 reich_id = join(problems,source,on=:ind_id => :sample,kind=:inner,makeunique=true)[:master_id]))
+                 reich_id = join(source,problems,on=:sample => :ind_id,kind=:inner,makeunique=true)[:master_id]))
     problems = join(problems,id_map,on=:master_id => :reich_id,kind=:anti)
     println("$(nrow(id_map)) in id_map, $(nrow(problems)) in problems")
 #   ind_id was a modified version of sample id: "."
@@ -78,7 +78,7 @@ function main()
         problems[i,:ind_short] = split(problems[i,:ind_id],".")[1]
     end
     id_map = vcat(id_map,DataFrames.DataFrame(colbran_id = join(source,problems,on=:sample => :ind_short,kind=:inner,makeunique=true)[:sample],
-                 reich_id = join(problems,source,on=:ind_short=>:sample,kind=:inner,makeunique=true)[:master_id]))
+                 reich_id = join(source,problems,on=:sample => :ind_short,kind=:inner,makeunique=true)[:master_id]))
     problems = join(problems,id_map,on=:master_id => :reich_id,kind=:anti)
     println("$(nrow(id_map)) in id_map, $(nrow(problems)) in problems")
 #   ind_id was a modified version of sample id: "_"
@@ -86,7 +86,7 @@ function main()
         problems[i,:ind_short] = split(problems[i,:ind_id],"_")[1]
     end
     id_map = vcat(id_map,DataFrames.DataFrame(colbran_id = join(source,problems,on=:sample => :ind_short,kind=:inner,makeunique=true)[:sample],
-                  reich_id = join(problems,source,on=:ind_short=>:sample,kind=:inner,makeunique=true)[:master_id]))
+                  reich_id = join(source,problems,on=:sample => :ind_short,kind=:inner,makeunique=true)[:master_id]))
     problems = join(problems,id_map,on=:master_id => :reich_id,kind=:anti)
     println("$(nrow(id_map)) in id_map, $(nrow(problems)) in problems")
 #   sample id was a modified version of :master_id
@@ -95,7 +95,7 @@ function main()
         source[i,:id_short] = split(source[i,:sample],"*")[1]
     end
     id_map = vcat(id_map,DataFrames.DataFrame(colbran_id = join(source,problems,on=:id_short => :master_id,kind=:inner,makeunique=true)[:sample],
-                 reich_id = join(problems,source,on=:master_id=>:id_short,kind=:inner,makeunique=true)[:master_id]))
+                 reich_id = join(source,problems,on=:id_short => :master_id,kind=:inner,makeunique=true)[:id_short]))
     problems = join(problems,id_map,on=:master_id => :reich_id,kind=:anti)
     println("$(nrow(id_map)) in id_map, $(nrow(problems)) in problems")
     CSV.write("data/reich_ancient_humans/mapped_sample_ids.csv", unique(id_map);delim=',')

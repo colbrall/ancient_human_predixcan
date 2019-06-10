@@ -19,8 +19,8 @@ using HypothesisTests
 default(color=:black,leg=false,grid=false,fontfamily="arial")
 
 Seaborn.set(style="white", palette="muted")
-set_style(Dict("font.family" =>["arial"]))
-box("off")
+set_style(Dict("font.family" =>["DejaVu Sans"]))
+
 
 
 EUROPE = ["Austria","Belgium","Bulgaria","Croatia","Czech Republic","Denmark",
@@ -89,9 +89,13 @@ function parse_commandline()
             arg_type = String
 
         "--threshold","-t"
-            help = "highest proportion of missing SNPs allowed for a sample to be considered."
+            help = "highest proportion of missing SNPs allowed for a sample to be considered if calling --sample_summary. Lowest allowable coverage rate if --pick_snps."
             arg_type = Float64
             default = 1.0
+
+        "--pick_snps"
+            help = "to extract SNPs passing a certain coverage rate"
+            action = :store_true
     end
     return parse_args(s)
 end
@@ -186,8 +190,7 @@ function filterThresh(snps::String,geno_dir::String,ind_file::String,thresh::Flo
     snp_ids = CSV.read(snps;delim='\t')[:rsid]
     inds = indArray(ind_file)
     counts = zeros(Int64,length(inds),1)
-    for item in readdir(geno_dir)
-        if !endswith(item,"txt.gz") continue end
+    for item in filter(x -> occursin(r"(?i)\.txt\.gz", x), readdir(geno_dir))
         println(item)
         for line in readlines(GZip.open("$geno_dir$item"))
             if !(String(split(line," ")[2]) in snp_ids) continue end #skip snps not of interest
@@ -256,8 +259,7 @@ function snpCoverage(geno_dir::String,anno_file::String,ind_file::String)
                     header=[:b,:ind_id,:x,:y,:a,:z],allowmissing=:none),[:a,:b,:x,:y,:z]),
                     samples,kind=:inner,on=:ind_id) #filter to just inds of interest
     samples[:num_snps]
-    for item in readdir(geno_dir)
-        if !endswith(item,"txt.gz") continue end
+    for item in filter(x -> occursin(r"(?i)\.txt\.gz", x), readdir(geno_dir))
         println(item)
         for line in readlines(GZip.open("$geno_dir$item"))
             push!(snps,["chr$(split(line,' ')[1])",parse(Int,split(line,' ')[3]),split(line,' ')[2],
@@ -272,6 +274,7 @@ end
 # summary stats and plot for snp coverage (output from snpCoverage())
 function snpSummary(snp_file::String)
     snps = CSV.read(snp_file;delim='\t')
+
     println("Coverage Rate:")
     describe(snps[:coverage_rate])
     dist_plot = histogram(snps[:coverage_rate], nbins = 100,xlabel = "Coverage Rate",ylabel = "Number of SNPs")
@@ -280,6 +283,10 @@ function snpSummary(snp_file::String)
     describe(snps[:gt_count])
     dist_plot = histogram(snps[:gt_count], nbins = 100,xlabel = "Number of Samples with Genotype",ylabel = "Number of SNPs")
     Plots.savefig(dist_plot, "1240k_snps_genotype_count.pdf")
+
+    # dist_plot = histogram(snps[snp[:type].== "1240K",:coverage_rate], nbins = 100,xlabel = "Coverage Rate",ylabel = "Number of SNPs",color=:red,alpha=0.3)
+    # dist_plot = histogram!(snps[snp[:type].!= "1240K",:coverage_rate], nbins = 100,xlabel = "Coverage Rate",ylabel = "Number of SNPs",color=:blue,alpha=0.3)
+    # Plots.savefig(dist_plot, "1240k_snps_coverage_rate.pdf")
 end
 
 function sampleSummary(anno_file::String,snp_file::String, geno_dir::String,ind_file::String,threshold::Float64,info_file::String,map_file::String)
@@ -298,17 +305,18 @@ function sampleSummary(anno_file::String,snp_file::String, geno_dir::String,ind_
     anno[anno[:lifestyle] .== "pastoral",:lifestyle] = "Past."
     anno[anno[:lifestyle] .== "Agriculture",:lifestyle] = "Agri."
     anno[anno[:lifestyle] .== "Hunter-gatherer",:lifestyle] = "HG"
-    # println(names(anno))
-    # println(first(anno,2))
     f, axes = Seaborn.subplots(2, 3, figsize=(10,7), sharey="all")
     x = y = 2
     plot_num = 1
     for loc in unique(anno[:continent])
-        # println(loc)
+        println("\n$loc")
+        for life in unique(anno[:lifestyle])
+            println("Num $life: $(count(i->(i==life),anno[anno[:continent].==loc,:lifestyle]))")
+        end
+        describe(anno[anno[:continent].==loc,:date])
         life_plot = swarmplot(anno[anno[:continent] .== loc,:lifestyle],anno[anno[:continent] .== loc,:date],
                             order=["HG","Past.","Agri.","NA"],ax=axes[x, y])
         life_plot.set_title("$(loc) (N = $(nrow(anno[anno[:continent] .== loc,:])))")
-        #life_plot.set_xlabel("Lifestyle")
         life_plot.set_ylabel("Age (Years BP)")
         plot_num += 1
         x = plot_num%2 + 1
@@ -316,17 +324,12 @@ function sampleSummary(anno_file::String,snp_file::String, geno_dir::String,ind_
     end
     Seaborn.savefig("lifestyle_age_by_continent.pdf")
     clf()
-    
-    f, axes = Seaborn.subplots(1, 2, figsize=(10,7), sharey="all")
-    plot_num = 1
-    for loc in unique(anno[:region])
-        life_plot = swarmplot(anno[anno[:region] .== loc,:lifestyle],anno[anno[:region] .== loc,:date],
-                            order=["HG","Past.","Agri.","NA"],ax=axes[1, plot_num])
-        life_plot.set_title("$(loc) (N = $(nrow(anno[anno[:region] .== loc,:])))")
-        life_plot.set_ylabel("Age (Years BP)")
-    end
-    Seaborn.savefig("lifestyle_age_by_region.pdf")
-    clf()
+end
+
+# extracts and outputs SNPs that pass a certain coverage rate threshold.
+function extractSNPs(snp_file::String,thresh::Float64)
+    snps = CSV.read(snp_file;delim='\t')
+    CSV.write("$(splitext(snp_file)[1])_filtered_$(thresh).bed",snps[snps[:coverage_rate] .> thresh,:];delim='\t')
 end
 
 function main()
@@ -343,6 +346,9 @@ function main()
     if args["sample_summary"]
         sampleSummary(args["anno_file"],args["snp_file"],args["geno_dir"],args["ind_file"],
                         args["threshold"],args["info_file"],args["map_file"])
+    end
+    if args["pick_snps"]
+        extractSNPs(args["snp_file"],args["threshold"])
     end
 end
 
