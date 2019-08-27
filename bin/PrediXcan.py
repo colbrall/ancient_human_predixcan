@@ -1,6 +1,7 @@
 #!/usr/bin/env python
-# Python 2.4
+# Python 2.7.4
 # modified by Laura Colbran to fix ref/alt bug Nov. 2017
+# modified by Laura Colbran to handle NA values in dosages July 2019
 
 import argparse
 from collections import defaultdict
@@ -46,7 +47,7 @@ def get_all_dosages(dosage_dir, dosage_prefix, dbuffer=None):
             arr = line.strip().split()
             rsid = arr[1]
             refallele = arr[3]
-            dosage_row = np.array(arr[6:], dtype=np.float64)
+            dosage_row = np.array(map(lambda x: 0.0 if x=='NA' else x, arr[6:]), dtype=np.float)
             yield rsid, refallele, dosage_row
 
 
@@ -197,6 +198,7 @@ def main():
         transcription_matrix = TranscriptionMatrix(BETA_FILE, SAMPLE_FILE, GENE_LIST)
         for rsid, allele, dosage_row in get_all_dosages(DOSAGE_DIR, DOSAGE_PREFIX, DOSAGE_BUFFER):
             for gene, weight, ref_allele in get_applications_of(rsid):
+                #print(gene)
                 transcription_matrix.update(gene, weight, ref_allele, allele, dosage_row)
         transcription_matrix.save(PRED_EXP_FILE)
     if ASSOC:
