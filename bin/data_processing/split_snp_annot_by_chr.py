@@ -16,7 +16,7 @@ and vice-versa.
 
 Input snp annotation file is expected to be a tab-delimited text file,
 with a header row, with fields for chromosome, position, variantID,
-reference allele, alternative allele, rsid_label1, rsid_label2, and 
+reference allele, alternative allele, rsid_label1, rsid_label2, and
 number of alternative alleles per site. See file
 GTEx_Analysis_v6_OMNI_genot_1KG_imputed_var_chr1to22_info4_maf01_CR95_CHR_POSb37_ID_REF_ALT.txt.gz
 from gtexportal.org for an example of such a file.
@@ -43,6 +43,8 @@ def split_snp_annot(annot_file, out_prefix):
         ann.readline()
         # Extract rows from input and write to body in appropriate output.
         for line in ann:
+            if line.startswith('#'): continue
+            if line.startswith('23'): break
             attrs = line.split()
             chr = attrs[0]
             pos = attrs[1]

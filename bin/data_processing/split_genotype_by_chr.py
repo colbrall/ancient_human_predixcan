@@ -4,6 +4,7 @@
 import os
 import sys
 import gzip
+import statistics
 
 '''
 Script to split a GTEx genotype file into multiple files by chromosome.
@@ -36,7 +37,7 @@ def split_genotype(geno_file, out_prefix):
         snps = set()
         for line in geno:
             l = line.decode("utf-8")
-            if l.startswith("#"): 
+            if l.startswith("#"):
                 if l.startswith("##"): continue #skip VCF info
                 else: # Write header in each file
                     header = ["ID"]
@@ -63,15 +64,21 @@ def split_genotype(geno_file, out_prefix):
             snps.add(varID)
             out_line = [varID]
             # pull decimal dosage
-            for ind in range(9,len(in_line)):
-                out_line += [in_line[ind].split(':')[2]]
+            # for ind in range(9,len(in_line)):
+            #     out_line += [in_line[ind].split(':')[2]]
+
             # convert genotype to dosage
-            #for ind in range(9,len(in_line)):
-            #    genotype = in_line[ind].split(':')[0]
-            #    if genotype == "0/0": out_line += ["0"]
-            #    elif genotype == "0/1" or genotype == "1/0": out_line += ["1"]
-            #    elif genotype == "1/1": out_line += ["2"]
-            #    else: out_line += ["NA"] #if a genotype call wasn't made for that person
+            for ind in range(9,len(in_line)):
+               genotype = in_line[ind].split(':')[0]
+               if genotype == "0/0": out_line += [0]
+               elif genotype == "0/1" or genotype == "1/0": out_line += [1]
+               elif genotype == "1/1": out_line += [2]
+               else:
+                   out_line += [-1] #if a genotype call wasn't made for that person
+            # mean level imputation
+            mean = statistics.mean([t for t in out_line[1:] if t != -1])
+            out_line = [str(mean) if i == -1 else str(i) for i in out_line]
+
             # Write line to appropriate file
             index = int(chr) - 1
             geno_by_chr[index].write('\t'.join(out_line) + "\n")

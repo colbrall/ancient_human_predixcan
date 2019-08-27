@@ -8,7 +8,7 @@
 ### Select the shell you would like to script to execute within.
 ##PBS -S /bin/bash
 #SBATCH --mail-user=laura.l.colbran@vanderbilt.edu
-#SBATCH --mail-type=ALL
+#SBATCH --mail-type=FAIL
 ### Inform the scheduler of the expected runtime, where
 ### walltime=HH:MM:SS.
 #SBATCH --time=16:00:00

@@ -17,10 +17,13 @@ def parse_gtf(gtf_path, out_path):
         out_header = '\t'.join(HEADER_FIELDS) + '\n'
         out.write(out_header)
         for line in gtf:
+            l = line.decode("utf-8")
             # Skip comments.
-            if line[0] == '#':
+            #print(l[0])
+            if l[0] == '#':
                 continue
-            gene_fields = line.split('\t')
+            #print(l)
+            gene_fields = l.split('\t')
             #print(gene_fields) 
             # Exclude any rows not describing genes.
             if gene_fields[2] != 'gene':
