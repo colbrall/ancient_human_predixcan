@@ -4,9 +4,9 @@ import os
 # Change these variables when adapting for different analyses.
 
 # List of identifiers for each database you'll make:
-STUDY_NAMES = ['Muscle_Skeletal','Ovary','Whole_Blood']
+STUDY_NAMES = ['Muscle_Skeletal','Ovary','Whole_Blood','Liver']
 # File names for gene and snp annotation:
-GENE_ANNOTATION_FN = 'gencode.v19.genes.patched_contigs.gtf.gz'
+GENE_ANNOTATION_FN = 'gencode.v19.transcripts.patched_contigs.gtf.gz'
 SNP_ANNOTATION_FN = 'GTEx_OMNI_genot_1KG_imputed_var_info4_maf01_CR95_CHR_POSb37_ID_REF_ALT_release_v6.txt.gz'
 # List of genotype/expression file names:
 GENOTYPE_FNS = ['GTEx_Analysis_20150112_OMNI_2.5M_5M_450Indiv_chr1to22_genot_imput_info04_maf01_HWEp1E6_ConstrVarIDs.vcf.gz']
@@ -37,10 +37,10 @@ GENOTYPE_INTER_PREFIX = map(lambda x: x[:-7], GENOTYPE_FNS)
 # Define directories---------------------------------------------------/
 INPUT_DIR = '/dors/capra_lab/data/genotype-tissue_expression_project/v6p/'
 INTER_DIR = '../../data/gtex_data/'
-OUTPUT_DIR = '../../data/models/'
+OUTPUT_DIR = '../../data/1kG_v6_models/'
 GENE_ANN_DIR = 'phe000006.v2.GTEx_RNAseq.marker-info.MULTI/'
 SNP_ANN_DIR = '/dors/capra_lab/data/predixcan_models/gtex_v6_1kg/'
-SNP_ANN_INTER_DIR = 'snp_ann/'
+SNP_ANN_INTER_DIR = 'snp_ann_1kG/'
 GENOTYPE_INPUT_DIR = 'phg000520.v2.GTEx_MidPoint_Imputation.genotype-calls-vcf.c1/'
 EXPRESSION_INPUT_DIR = 'GTEx_Analysis_v6p_eQTL_expression_matrices/'
 GENOTYPE_INTER_DIR = 'genotypes/'

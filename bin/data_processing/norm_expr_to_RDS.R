@@ -5,25 +5,23 @@ library('readr')
 
 makeOutput <- function(tiss_name, norm_path, cov_path, out_dir) {
     #print("writing output...")
+    #norm_path <- "/dors/capra_lab/data/genotype-tissue_expression_project/v6p/GTEx_Analysis_v6p_eQTL_expression_matrices/Ovary_Analysis.v6p.normalized.expression.bed.gz"
     norm <- read.table(norm_path, stringsAsFactors = FALSE,
-        header = TRUE)
+        header = TRUE,comment.char="z",check.names=FALSE)
 
     # set rownames to Gene ids, remove non-expression data columns
     rownames(norm) <- norm[,4]
-    norm[,-c(1,2,3,4)]
+    norm <- norm[,-c(1,2,3,4)]
+    norm <- t(norm)
+    head(norm)
 
-     # truncate ind IDs for matching to genotype
-    ids <- row.names(norm)
-    for (i in 1:length(ids)) {
-        ids[i] <- paste(strsplit(ids[i],'[.]')[[1]][1:2],collapse = "-")
-    }
-    row.names(norm) <- ids
-
+    #cov_path <- "/dors/capra_lab/data/genotype-tissue_expression_project/v6p/GTEx_Analysis_v6p_eQTL_covariates/Ovary_Analysis.v6p.covariates.txt"
     # Correct for covariates if they were provided
     if (!is.na(cov_path)) {
-        covariate <- read.table(paste(cov_path,cov_files[i],sep=""), stringsAsFactors = FALSE,
+        covariate <- read.table(cov_path, stringsAsFactors = FALSE,
                                   header = TRUE, row.names = 1)
         covariate <- t(covariate)
+        head(covariate)
 
         # filter to set of people in Eric's covariate file (accounts for some filtering I couldn't replicate independently)
         ids <- row.names(covariate)
@@ -31,6 +29,8 @@ makeOutput <- function(tiss_name, norm_path, cov_path, out_dir) {
             ids[i] <- paste(strsplit(ids[i],'[.]')[[1]][1:2],collapse = "-")
         }
         row.names(covariate) <- ids
+        head(covariate)
+
         norm <- norm[rownames(norm) %in% rownames(covariate),]
 
         # confirm same order

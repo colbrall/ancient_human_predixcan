@@ -4,9 +4,8 @@
 import subprocess
 import sys
 
-from model_parameters_gencodev19 import *
-#from model_parameters_gencodev12 import *
-#from model_parameters_test import *
+#from model_parameters_normalized import *
+from model_parameters_1240k import *
 
 # Process gene annotation----------------------------------------------/
 #print("Parsing gene annotation...")
@@ -22,16 +21,16 @@ from model_parameters_gencodev19 import *
 #    INTER_DIR + GENE_ANNOT_INTER2])
 
 # Process snp annotation-----------------------------------------------/
-#print("Splitting SNP annotation file up by chromosome...")
-#subprocess.call(
-#    ['../data_processing/split_snp_annot_by_chr.py',
-#    SNP_ANN_DIR + SNP_ANNOTATION_FN,
-#    INTER_DIR + SNP_ANN_INTER_DIR + SNP_ANN_INTER_PREFIX1
-#    ])
-#print("Saving each snp annotation file as RDS object")
-#subprocess.call(
-#    ['Rscript', '../data_processing/snp_annot_to_RDS.R',
-#    INTER_DIR + SNP_ANN_INTER_DIR + SNP_ANN_INTER_PREFIX2])
+print("Splitting SNP annotation file up by chromosome...")
+subprocess.call(
+    ['../data_processing/split_snp_annot_by_chr.py',
+    SNP_ANN_DIR + SNP_ANNOTATION_FN,
+    INTER_DIR + SNP_ANN_INTER_DIR + SNP_ANN_INTER_PREFIX1
+    ])
+print("Saving each snp annotation file as RDS object")
+subprocess.call(
+    ['Rscript', '../data_processing/snp_annot_to_RDS.R',
+    INTER_DIR + SNP_ANN_INTER_DIR + SNP_ANN_INTER_PREFIX2])
 
 # Process genotype files-----------------------------------------------/
 #print("Splitting genotype files up by chromosome...")
@@ -42,28 +41,28 @@ from model_parameters_gencodev19 import *
 #        INTER_DIR + GENOTYPE_INTER_DIR + GENOTYPE_INTER_PREFIX[i]])
 
 # Process expression files---------------------------------------------/
-print("Transposing expression data and saving as RDS object...")
-for i in range(len(STUDY_NAMES)):
-    subprocess.call(
-        ['Rscript', '../data_processing/expr_to_transposed_RDS_test.R',
-        STUDY_NAMES[i],
-        INPUT_DIR + EXPRESSION_INPUT_DIR + STUDY_NAMES[i],
-        INTER_DIR + EXPRESSION_INTER_DIR,
-        INTER_DIR + COVARIATES_DIR + STUDY_NAMES[i]])
+#print("Transposing expression data and saving as RDS object...")
+#for i in range(len(STUDY_NAMES)):
+#    subprocess.call(
+#        ['Rscript', '../data_processing/norm_expr_to_RDS.R',
+#        STUDY_NAMES[i],
+#        INPUT_DIR + EXPRESSION_INPUT_DIR + STUDY_NAMES[i],
+#        INTER_DIR + EXPRESSION_INTER_DIR,
+#        INPUT_DIR + COVARIATES_DIR + STUDY_NAMES[i]])
 
 # Create metadata files------------------------------------------------/
-#print("Creating metadata files...")
-#geno_prefix = list(GENOTYPE_INTER_PREFIX)
-#for i in range(len(STUDY_NAMES)):
-#    command = ' '.join(['../data_processing/create_meta_data.py',
-#        '--geno', INTER_DIR + GENOTYPE_INTER_DIR + geno_prefix[0] + '.chr22.txt',
-#        '--expr', INTER_DIR + EXPRESSION_INTER_DIR + STUDY_NAMES[i] + ".txt",
-#        '--snpset', SNPSET,
-#        '--alpha', ALPHA,
-#        '--n_k_folds', N_K_FOLDS,
-#        '--rsid_label', RSID_LABEL,
-#        '--window', WINDOW,
-#        '--out_prefix', OUTPUT_DIR + 'allMetaData/' + STUDY_NAMES[i]])
-#    subprocess.call(command, shell=True)
+print("Creating metadata files...")
+geno_prefix = list(GENOTYPE_INTER_PREFIX)
+for i in range(len(STUDY_NAMES)):
+    command = ' '.join(['../data_processing/create_meta_data.py',
+        '--geno', INTER_DIR + GENOTYPE_INTER_DIR + geno_prefix[0] + '.chr22.txt',
+        '--expr', INTER_DIR + EXPRESSION_INTER_DIR + STUDY_NAMES[i] + ".txt",
+        '--snpset', SNPSET,
+        '--alpha', ALPHA,
+        '--n_k_folds', N_K_FOLDS,
+        '--rsid_label', RSID_LABEL,
+        '--window', WINDOW,
+        '--out_prefix', OUTPUT_DIR + 'allMetaData/' + STUDY_NAMES[i]])
+    subprocess.call(command, shell=True)
 
 print("Done!")
