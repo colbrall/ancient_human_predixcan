@@ -3,6 +3,7 @@ bin/maya/
 bin/eigensoft/
 bin/downloaded/
 bin/FAQ.md
+bin/build_gene_models/__pycache__/
 *~
 *pyc
 *output
