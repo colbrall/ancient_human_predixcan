@@ -96,6 +96,10 @@ function parse_commandline()
         "--pick_snps"
             help = "to extract SNPs passing a certain coverage rate"
             action = :store_true
+
+        "--thresh_summ"
+            help = "to summarize samples by a variety of missingness thresholds"
+            action = :store_true
     end
     return parse_args(s)
 end
@@ -326,6 +330,47 @@ function sampleSummary(anno_file::String,snp_file::String, geno_dir::String,ind_
     clf()
 end
 
+function threshSummary(anno_file::String,snp_file::String, geno_dir::String,ind_file::String,info_file::String,map_file::String)
+    #anno_file = "../../data/ancient_dna/reich_compilation/v37/v37.2.1240K.clean4.anno"
+    #map_file =  "data/reich_ancient_humans/mapped_sample_ids.csv"
+    #info_file = "data/aDNA_sources.csv"
+    anno = parseAnnoFile(anno_file)
+    anno = anno[anno[:assessment] .!= "no",:]
+    println("Number of Samples at Start: $(nrow(anno))")
+    thresholds = [0.25,0.2,0.15,0.1,0.05,0.0]
+    anno[:passing] = ""
+    for thresh in thresholds
+        passed = filterThresh(snp_file,geno_dir,ind_file,thresh)
+        for ind in 1:nrow(anno)
+            if in(anno[ind,:ind_id],passed)
+                anno[ind,:passing] = "$(anno[ind,:passing])_$(string(thresh,0))"
+            end
+        end
+    end
+    anno = anno[anno[:passing] .!= "",:]
+    println("Number of Samples passing any threshold: $(nrow(anno))")
+    anno = mapSampleIDs(anno,map_file,info_file)
+    f, axes = Seaborn.subplots(2, 3, figsize=(10,7), sharey="all")
+    x = y = 2
+    plot_num = 1
+    for thresh in thresholds
+        println("Num passing $thresh:")
+        for cont in unique(anno[:continent])
+            println("Num $cont: $(count(i->(occursin(string(thresh,0),i)),anno[anno[:continent].==cont,:passing]))")
+        end
+        life_plot = swarmplot(anno[[occursin(string(thresh,0),i) for i in anno[:passing]],:continent],
+                            anno[[occursin(string(thresh,0),i) for i in anno[:passing]],:date],
+                            order=["Europe","Asia","Africa","Oceania","N_America","S_America"],ax=axes[x, y])
+        life_plot.set_title("$(thresh) (N = $(nrow(anno[[occursin(string(thresh,0),i) for i in anno[:passing]],:])))")
+        life_plot.set_ylabel("Age (Years BP)")
+        plot_num += 1
+        x = plot_num%2 + 1
+        y = plot_num%3 + 1
+    end
+    Seaborn.savefig("continent_age_by_threshold.pdf")
+    clf()
+end
+
 # extracts and outputs SNPs that pass a certain coverage rate threshold.
 function extractSNPs(snp_file::String,thresh::Float64)
     snps = CSV.read(snp_file;delim='\t')
@@ -349,6 +394,10 @@ function main()
     end
     if args["pick_snps"]
         extractSNPs(args["snp_file"],args["threshold"])
+    end
+    if args["thresh_summ"]
+        threshSummary(args["anno_file"],args["snp_file"],args["geno_dir"],args["ind_file"],
+                        args["info_file"],args["map_file"])
     end
 end
 

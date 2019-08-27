@@ -1,4 +1,5 @@
 '''
+@author Laura Colbran
 given an Ensembl or rs id, searches for PrediXcan models in a SQLite database
 
 prints all models for the gene, or all models using the SNP, and what tissues
