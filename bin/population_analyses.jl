@@ -239,11 +239,22 @@ function indSim(base_pop::String,pop_dir::Array{String,1})
     df = DataFrame(comp_pop = String[], base_ind = String[], sim_ind = String[], tiss = String[], corr = Float64[])
     for tiss in keys(map_dict)
         base = readGeneDF("$(realpath(base_pop))/$(map_dict[tiss])_elasticNet0_0.5.full.gz")
+        if base == "NA" continue end
         for pop_file in pop_dir
             pop = readGeneDF("$(realpath(pop_file))/$(map_dict[tiss])_elasticNet0_0.5.full.gz")
+            if pop == "NA"
+                continue
+            end
+            println("$pop_file, $tiss")
+            temp_base = sort!(join(base,pop,on=:gene_id,kind=:semi),cols=[:gene_id])
+            temp_pop = sort!(join(pop,base,on=:gene_id,kind=:semi),cols=[:gene_id])
+            println(nrow(base))
+            println(nrow(pop))
+            println(nrow(temp_pop))
+            println(nrow(temp_base))
             for id in names(pop)[2:end]
                 base_id = split(String(id),"_")[1]
-                push!(df,[split(dirname(pop_file),"/")[end],base_id,String(id),tiss,corspearman(pop[id],base[Symbol(base_id)])])
+                push!(df,[split(dirname(pop_file),"/")[end],base_id,String(id),tiss,corspearman(temp_pop[id],temp_base[Symbol(base_id)])])
             end
         end
     end
@@ -252,7 +263,7 @@ function indSim(base_pop::String,pop_dir::Array{String,1})
     Plots.savefig(comp_plot, "pop_corr_box.pdf")
 end
 
-#correlation across genes by threshold-- scatterplots
+#correlation across genes by threshold distribution
 function geneSim(base_pop::String,pop_dir::Array{String,1})
     map_dict = mapNames()::Dict{String,String}
     out = DataFrame(gene=String[],rho=Float64[],tissue=String[])
