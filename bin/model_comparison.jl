@@ -12,6 +12,8 @@ using StatsPlots
 using SQLite
 using GZip
 
+default(color=:blue,leg=false,grid=false,fontfamily="arial",alpha=0.5)
+
 # parses command-line arguments
 function parse_commandline()
     s = ArgParseSettings()
@@ -35,34 +37,6 @@ function parse_commandline()
             action = :store_true
     end
     return parse_args(s)
-end
-
-#compares R2 and Number of SNPs in models from both sets
-function performance(db_files::Array{String,1})
-    q = "SELECT * FROM 'extra'"
-    models_1 = DataFrame(SQLite.Query(SQLite.DB(db_files[1]),q))
-#    models_1 = models_1[models_1[Symbol("pred.perf.R2")] .> 0.1,:]
-    models_2 = DataFrame(SQLite.Query(SQLite.DB(db_files[2]),q))
-    println("Number of models in $(basename(db_files[1])): $(nrow(models_1))")
-    println("Number of models in $(basename(db_files[2])): $(nrow(models_2))")
-    all_models = join(models_1,models_2,on=:gene,kind=:inner,makeunique=true)
-    println("Number models shared: $(nrow(all_models))")
-    #println(join(models_2,models_1,on=:gene,kind=:anti,makeunique=true))
-    #exit()
-    #println(first(all_models,6))
-    println("R2:")
-        rho = corspearman(convert(Array{Float64,1},all_models[Symbol("pred.perf.R2")]),convert(Array{Float64,1},all_models[Symbol("pred.perf.R2_1")]))
-	println("In order of arguments:")
-	describe(all_models[Symbol("pred.perf.R2")])
-	describe(all_models[Symbol("pred.perf.R2_1")])
-        #rho = corspearman(convert(Array{Float64,1},all_models[Symbol("pred.perf.R2")]),convert(Array{Float64,1},all_models[Symbol("R2")]))
-        println("Spearman rho: $(rho)")
-        println(OneSampleZTest(atanh(rho), 1, nrow(all_models)))
-    println("Num SNPs:")
-        rho = corspearman(convert(Array{Float64,1},all_models[Symbol("n.snps.in.model")]),convert(Array{Float64,1},all_models[Symbol("n.snps.in.model_1")]))
-        #rho = corspearman(convert(Array{Float64,1},all_models[Symbol("n.snps.in.model")]),convert(Array{Float64,1},all_models[Symbol("n.snps")]))
-        println("Spearman rho: $(rho)")
-        println(OneSampleZTest(atanh(rho), 1, nrow(all_models)))
 end
 
 # for each SNP, count the number of people missing it, and for each individual,
@@ -101,6 +75,60 @@ function missingDict(path::String)
     return ind_dict,snp_dict
 end
 
+#compares R2 and Number of SNPs in models from both sets
+function performance(db_files::Array{String,1})
+    q = "SELECT * FROM 'extra'"
+    models_1 = DataFrame(SQLite.Query(SQLite.DB(db_files[1]),q))
+#    models_1 = models_1[models_1[Symbol("pred.perf.R2")] .> 0.1,:]
+    models_2 = DataFrame(SQLite.Query(SQLite.DB(db_files[2]),q))
+    println("Number of models in $(db_files[1]): $(nrow(models_1))")
+    println("R2:")
+    describe(models_1[Symbol("pred.perf.R2")])
+    println("NumSNPs:")
+    describe(models_1[Symbol("n.snps.in.model")])
+    println("Number of models in $(db_files[2]): $(nrow(models_2))")
+    println("R2:")
+    describe(models_2[Symbol("pred.perf.R2")])
+    println("NumSNPs:")
+    describe(models_2[Symbol("n.snps.in.model")])
+    all_models = join(models_1,models_2,on=:gene,kind=:inner,makeunique=true)
+    println("Number models shared: $(nrow(all_models))")
+
+    #println(join(models_2,models_1,on=:gene,kind=:anti,makeunique=true))
+    #println(first(all_models,6))
+	println("In order of arguments, models that are shared:")
+    println("R2:")
+	describe(all_models[Symbol("pred.perf.R2")])
+	describe(all_models[Symbol("pred.perf.R2_1")])
+    describe(all_models[Symbol("n.snps.in.model")])
+    describe(all_models[Symbol("n.snps.in.model_1")])
+
+    rho = corspearman(convert(Array{Float64,1},all_models[Symbol("pred.perf.R2")]),convert(Array{Float64,1},all_models[Symbol("pred.perf.R2_1")]))
+    #rho = corspearman(convert(Array{Float64,1},all_models[Symbol("pred.perf.R2")]),convert(Array{Float64,1},all_models[Symbol("R2")]))
+    println("Spearman rho: $(rho)")
+    println(OneSampleZTest(atanh(rho), 1, nrow(all_models)))
+    println("Num SNPs:")
+
+    rho = corspearman(convert(Array{Float64,1},all_models[Symbol("n.snps.in.model")]),convert(Array{Float64,1},all_models[Symbol("n.snps.in.model_1")]))
+    #rho = corspearman(convert(Array{Float64,1},all_models[Symbol("n.snps.in.model")]),convert(Array{Float64,1},all_models[Symbol("n.snps")]))
+    println("Spearman rho: $(rho)")
+    println(OneSampleZTest(atanh(rho), 1, nrow(all_models)))
+
+    #plots
+    r2_1_plot = histogram(models_1[Symbol("pred.perf.R2")],xlabel="R2",ylabel="Num. Models",bins=50,margin=10Plots.mm)
+    r2_1_plot = histogram!(all_models[Symbol("pred.perf.R2")],bins=50,color=:red)
+    Plots.savefig(r2_1_plot,"arg1_r2.pdf")
+    r2_2_plot = histogram(models_2[Symbol("pred.perf.R2")],xlabel="R2",ylabel="Num. Models",bins=50,margin=10Plots.mm)
+    r2_2_plot = histogram!(all_models[Symbol("pred.perf.R2_1")],bins=50,color=:red)
+    Plots.savefig(r2_2_plot,"arg2_r2.pdf")
+    nsnps_1_plot = histogram(models_1[Symbol("n.snps.in.model")],xlabel="Num_SNPs",ylabel="Num. Models",bins=50,margin=10Plots.mm)
+    nsnps_1_plot = histogram!(all_models[Symbol("n.snps.in.model")],bins=50,color=:red)
+    Plots.savefig(nsnps_1_plot,"arg1_nsnps.pdf")
+    nsnps_2_plot = histogram(models_2[Symbol("n.snps.in.model")],xlabel="Num_SNPs",ylabel="Num. Models",bins=50,margin=10Plots.mm)
+    nsnps_2_plot = histogram!(all_models[Symbol("n.snps.in.model_1")],bins=50,color=:red)
+    Plots.savefig(nsnps_2_plot,"arg2_nsnps.pdf")
+end
+
 # analyses of missing SNPs in models
 function missingSNPs(db_files::Array{String,1},genome_path::String)
     ind_dict,snp_dict = missingDict(genome_path)
@@ -133,7 +161,7 @@ function missingSNPs(db_files::Array{String,1},genome_path::String)
                 end
                 if length(snp_dict[snp]) > max # max number of people missing a single SNP per model
                     max = length(snp_dict[snp])
-                end        
+                end
         # max number of missing SNPs in a single person for each model
             end
         end
