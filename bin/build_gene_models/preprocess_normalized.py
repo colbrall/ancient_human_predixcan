@@ -6,7 +6,7 @@ import sys
 
 #from model_parameters_normalized import *
 from model_parameters_1240k import *
-
+#from model_parameters_top800k import *
 # Process gene annotation----------------------------------------------/
 #print("Parsing gene annotation...")
 #subprocess.call(
