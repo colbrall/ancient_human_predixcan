@@ -18,7 +18,7 @@ using Statistics
 using StatsPlots
 using Plots
 
-default(color=:black,leg=false,grid=false,fontfamily="arial")
+default(color=:blue,leg=false,grid=false,fontfamily="arial",alpha=0.5)
 #using PyPlot
 
 const DENDRO_SOURCE =
@@ -236,7 +236,8 @@ end
 #correlation across individuals by threshold-- boxplots
 function indSim(base_pop::String,pop_dir::Array{String,1})
     map_dict = mapNames()::Dict{String,String}
-    df = DataFrame(comp_pop = String[], base_ind = String[], sim_ind = String[], tiss = String[], corr = Float64[])
+    corr_df = DataFrame(comp_pop = String[], base_ind = String[], sim_ind = String[], tiss = String[], rho = Float64[],r = Float64[])
+    uni_df = DataFrame(id = String[],comp_pop = String[],num_comp_uniq=Int64[],num_base_uniq=Int64()) #id = model_tiss
     for tiss in keys(map_dict)
         base = readGeneDF("$(realpath(base_pop))/$(map_dict[tiss])_elasticNet0_0.5.full.gz")
         if base == "NA" continue end
@@ -248,19 +249,23 @@ function indSim(base_pop::String,pop_dir::Array{String,1})
             println("$pop_file, $tiss")
             temp_base = sort!(join(base,pop,on=:gene_id,kind=:semi),cols=[:gene_id])
             temp_pop = sort!(join(pop,base,on=:gene_id,kind=:semi),cols=[:gene_id])
-            println(nrow(base))
-            println(nrow(pop))
-            println(nrow(temp_pop))
-            println(nrow(temp_base))
+            for i in 1:nrow(temp_pop)
+                push!(uni_df,["$(temp_pop[i,:gene_id])_$tiss",split(dirname(pop_file),"/")[end],length(unique(temp_pop[i,2:end])),length(unique(temp_base[i,2:end]))])
+            end
             for id in names(pop)[2:end]
                 base_id = split(String(id),"_")[1]
-                push!(df,[split(dirname(pop_file),"/")[end],base_id,String(id),tiss,corspearman(temp_pop[id],temp_base[Symbol(base_id)])])
+                push!(corr_df,[split(dirname(pop_file),"/")[end],base_id,String(id),tiss,corspearman(temp_pop[id],temp_base[Symbol(base_id)]),cor(temp_pop[id],temp_base[Symbol(base_id)])])
             end
         end
     end
-    comp_plot = boxplot(df[:comp_pop], df[:corr],notch = true, ylabel="Rho",xlabel= "Comparison Populations",margin=10Plots.mm) #
+    comp_plot = boxplot(corr_df[:comp_pop], corr_df[:rho],notch = true, ylabel="Rho",xlabel= "Comparison Populations",margin=10Plots.mm)
     #tight_layout()
-    Plots.savefig(comp_plot, "pop_corr_box.pdf")
+    Plots.savefig(comp_plot, "pop_corrspearman_box.pdf")
+    comp_plot = boxplot(corr_df[:comp_pop], corr_df[:r],notch = true, ylabel="Pearson r",xlabel= "Comparison Populations",margin=10Plots.mm)
+    Plots.savefig(comp_plot, "pop_corrpearson_box.pdf")
+    comp_plot = violin(uni_df[:comp_pop],uni_df[:num_base_uniq],side=:left)
+    comp_plot = violin!(uni_df[:comp_pop],uni_df[:num_comp_uniq],side=:right,color=:red)
+    Plots.savefig(comp_plot, "num_uniq_values.pdf")
 end
 
 #correlation across genes by threshold distribution
