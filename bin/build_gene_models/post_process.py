@@ -6,7 +6,8 @@
 
 import subprocess
 
-from model_parameters_top800k import *
+#from model_parameters_top800k import *
+from model_parameters_rand800k import *
 
 for i, study in enumerate(STUDY_NAMES):
     subprocess.call(
