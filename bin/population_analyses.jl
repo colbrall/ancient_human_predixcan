@@ -259,7 +259,6 @@ function indSim(base_pop::String,pop_dir::Array{String,1})
     Plots.savefig(comp_plot, "pop_corrspearman_box.pdf")
     comp_plot = boxplot(corr_df[:comp_pop], corr_df[:r],notch = true, ylabel="Pearson r",xlabel= "Comparison Populations",margin=10Plots.mm)
     Plots.savefig(comp_plot, "pop_corrpearson_box.pdf")
-    comp_plot = violin(uni_df[:comp_pop],uni_df[:num_base_uniq],side=:left)
 end
 
 #correlation across genes by threshold distribution
