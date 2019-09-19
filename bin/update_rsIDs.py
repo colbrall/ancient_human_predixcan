@@ -7,24 +7,26 @@
 # Python 3
 #
 #USAGE:
-# python update_rsIDs.py FLAG PATH/TO/PREDIXCAN/SNPS PATH/TO/FILE/*
+# python update_rsIDs.py FLAG RS_COL PATH/TO/PREDIXCAN/SNPS PATH/TO/FILE/*
 # FLAG can be bed or dosage, depending on format of File you want to convert
+# RS_COL is an integer, and is the column in the Predixcan file you want to get the rsIDs from. 0-indexed.
 
 import sys
 import string
 import gzip
 
-def dosageConvert(file_list,ref_file):
+def dosageConvert(file_list,ref_file,rs_col):
     for fil in file_list:
         dict = {} #{loc:rsID}
-        with gzip.open(fil, 'r') as f:
+        with gzip.open(fil, 'rt') as f:
+            #print(f.readlines(1))
             chr = f.readlines(1)[0].split('\t')[0].split('r')[-1]
             if chr == "": chr = f.readlines(1)[0].split('\t')[0].split('r')[-1]
             f.seek(0)
             with gzip.open(ref_file,'rt') as g: #dict with PrediXcan rsIDs
                 for line in g:
                     if line.startswith(chr + "\t"):
-                        dict[line.split("\t")[1]] = (line.split("\t")[6],line.split("\t")[3],line.split("\t")[4])
+                        dict[line.split("\t")[1]] = (line.split("\t")[rs_col],line.split("\t")[3],line.split("\t")[4])
 #           output
             name = "chr" + chr + ".rs_updated.dos"
             of = open(name,"w")
@@ -42,12 +44,12 @@ def dosageConvert(file_list,ref_file):
                 if l[1].startswith("rs"): of.write("\t".join(l)) #only write lines that end up w/ an rsID
             of.close()
 
-def bedConvert(file_list,ref_file):
+def bedConvert(file_list,ref_file,rs_col):
     dict = {} #{loc:rsID}
     with gzip.open(ref_file,'r') as g: #dict with PrediXcan rsIDs
         for line in g:
             if line.startswith('#'): continue
-            dict['\t'.join([line.split('\t')[0],line.split("\t")[1]])] = (line.split("\t")[6])
+            dict['\t'.join([line.split('\t')[0],line.split("\t")[1]])] = (line.split("\t")[rs_col])
     for fil in file_list:
         with open(fil, 'r') as inf:
             with open("%s_rsupdated.bed" % (".".join(fil.split(".")[0:-1])),'w') as out:
@@ -64,9 +66,9 @@ def bedConvert(file_list,ref_file):
 
 def main():
     if sys.argv[1] == "dosage":
-        dosageConvert(sys.argv[3:],sys.argv[2])
+        dosageConvert(sys.argv[4:],sys.argv[2],sys.argv[3])
     elif sys.argv[1] == "bed":
-        bedConvert(sys.argv[3:],sys.argv[2])
+        bedConvert(sys.argv[4:],sys.argv[2],sys.argv[3])
     else:
         print("ERROR: Specify format as bed or dosage!")
 
