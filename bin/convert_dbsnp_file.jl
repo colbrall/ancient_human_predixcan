@@ -25,16 +25,16 @@ end
 function bedToAnno(file_path::String,out_name::String)
     GZip.open(file_path,"r") do inf
         open("$out_name.anno.txt","w") do outf
-            write(outf,"#Chr\tPos\tVariantID\tRef\tAlt\trsID")
+            write(outf,"#Chr\tPos\tVariantID\tRef\tAlt\trsID\n")
+            prev = ""
             for line in eachline(inf)
                 l = split(chomp(line),"\t")
                 chr = split(l[1],"r")[end]
                 alleles = split(l[9],"/")
                 alt = ""
                 ref = ""
-                if length(alleles) > 2   #skip anything that's not biallelic
-                    println(line)
-                    exit()
+                if length(alleles) > 2 || l[9] == "lengthTooLong"  #skip anything that's not biallelic, or is a super-long indel
+                    continue
                 elseif length(alleles) < 2 #fill in alleles for indels
                     if l[7] == "-"
                         alt = split(l[22],",")[2]
@@ -58,7 +58,13 @@ function bedToAnno(file_path::String,out_name::String)
                         alt = split(ref,"")[1]
                     end
                 end
-                write(outf,join([chr,l[3],"$(chr)_$(l[3])_$(ref)_$(alt)_b38",ref,alt,"$(l[4])\n"],"\t"))
+                id = "$(chr)_$(l[3])_$(ref)_$(alt)_b38"
+                if id == prev
+                    continue
+                else #if there's identical SNPs in a row, just write first occurrence
+                    prev = id
+                    write(outf,join([chr,l[3],id,ref,alt,"$(l[4])\n"],"\t"))
+                end
             end
         end
     end
