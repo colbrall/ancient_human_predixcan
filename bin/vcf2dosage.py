@@ -3,6 +3,9 @@
 # convert altai neanderthal vcf genome into dosage files for PrediXcan
 # not generalizable as of yet
 # currently only filtering out places where genotype = ./.
+#
+# USAGE: python vcf2dosage.py TYPE PATH/TO/VCF
+# TYPE can by 1kG or update
 # python 2
 
 # dosage output:
