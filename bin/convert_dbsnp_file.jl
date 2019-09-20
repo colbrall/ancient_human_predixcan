@@ -26,10 +26,18 @@ function bedToAnno(file_path::String,out_name::String)
     GZip.open(file_path,"r") do inf
         open("$out_name.anno.txt","w") do outf
             write(outf,"#Chr\tPos\tVariantID\tRef\tAlt\trsID\n")
-            prev = ""
+            prev1 = ""
+            prev2 = ""
+            prev3 = ""
             for line in eachline(inf)
                 l = split(chomp(line),"\t")
+                if occursin("_",l[1]) #skip blacklist chromosomes
+                    continue
+                end
                 chr = split(l[1],"r")[end]
+                if chr == "X" #skip sex chromosomes
+                    break
+                end
                 alleles = split(l[9],"/")
                 alt = ""
                 ref = ""
@@ -59,10 +67,15 @@ function bedToAnno(file_path::String,out_name::String)
                     end
                 end
                 id = "$(chr)_$(l[3])_$(ref)_$(alt)_b38"
-                if id == prev
+                if id == prev1 || id == prev2 ||id == prev3
+                    prev1 = prev2
+                    prev2 = prev3
+                    prev3 = id
                     continue
-                else #if there's identical SNPs in a row, just write first occurrence
-                    prev = id
+                else #if there's duplicate SNPs, just write first occurrence
+                    prev1 = prev2
+                    prev2 = prev3
+                    prev3 = id
                     write(outf,join([chr,l[3],id,ref,alt,"$(l[4])\n"],"\t"))
                 end
             end

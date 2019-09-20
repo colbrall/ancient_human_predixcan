@@ -55,6 +55,8 @@ def split_snp_annot(annot_file, out_prefix):
             # Skip non-single letter polymorphisms
             if len(refAllele) > 1 or len(effectAllele) > 1:
                 continue
+            if refAllele not in SNP_COMPLEMENT.keys(): #skips a few mishandled indels
+                continue
             # Skip ambiguous strands
             if SNP_COMPLEMENT[refAllele] == effectAllele:
                 continue
