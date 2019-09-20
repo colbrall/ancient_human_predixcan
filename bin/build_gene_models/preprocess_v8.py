@@ -9,8 +9,8 @@ from model_parameters_v8_all import *
 # Process gene annotation----------------------------------------------/
 print("Parsing gene annotation...")
 subprocess.call(
-    ['../data_processing/parse_gtf.py',
-    INPUT_DIR + GENE_ANN_DIR + GENE_ANNOTATION_FN,
+    ['../data_processing/parse_gtf_v8.py',
+    GENE_ANN_DIR + GENE_ANNOTATION_FN,
     INTER_DIR + GENE_ANNOT_INTER1
     ])
 print("Saving each gene annotation file as RDS object")
@@ -32,22 +32,21 @@ subprocess.call(
     INTER_DIR + SNP_ANN_INTER_DIR + SNP_ANN_INTER_PREFIX2])
 
 # Process genotype files-----------------------------------------------/
-print("Splitting genotype files up by chromosome...")
-for i in range(len(GENOTYPE_FNS)):
-   subprocess.call(
-       ['../data_processing/split_genotype_by_chr.py',
-       INPUT_DIR + GENOTYPE_INPUT_DIR + GENOTYPE_FNS[i],
-       INTER_DIR + GENOTYPE_INTER_DIR + GENOTYPE_INTER_PREFIX[i]])
+#print("Splitting genotype files up by chromosome...")
+#for i in range(len(GENOTYPE_FNS)):
+#   subprocess.call(
+#       ['../data_processing/split_genotype_by_chr.py',
+#       GENOTYPE_INPUT_DIR + GENOTYPE_FNS[i],
+#       INTER_DIR + GENOTYPE_INTER_DIR + GENOTYPE_INTER_PREFIX[i]])
 
 # Process expression files---------------------------------------------/
-print("Transposing expression data and saving as RDS object...")
-for i in range(len(STUDY_NAMES)):
-   subprocess.call(
-       ['Rscript', '../data_processing/expr_to_transposed_RDS_v8.R',
-       STUDY_NAMES[i],
-       INPUT_DIR + EXPRESSION_INPUT_DIR + STUDY_NAMES[i],
-       INTER_DIR + EXPRESSION_INTER_DIR,
-       INPUT_DIR + COVARIATES_DIR + STUDY_NAMES[i]])
+#print("Transposing expression data and saving as RDS object...")
+#for i in range(len(STUDY_NAMES)):
+#   subprocess.call(
+#       ['Rscript', '../data_processing/expr_to_transposed_RDS_v8.R',
+#       STUDY_NAMES[i],
+#       EXPRESSION_INPUT_DIR + STUDY_NAMES[i],
+#       INTER_DIR + EXPRESSION_INTER_DIR])
 
 # Create metadata files------------------------------------------------/
 print("Creating metadata files...")
