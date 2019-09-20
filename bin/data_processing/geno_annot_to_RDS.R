@@ -3,5 +3,6 @@
 argv <- commandArgs(trailingOnly = TRUE)
 
 gene_annot <- read.table(argv[1], stringsAsFactors = FALSE, header = TRUE)
+
 rownames(gene_annot) <- gene_annot$gene_id
 saveRDS(gene_annot, argv[2])

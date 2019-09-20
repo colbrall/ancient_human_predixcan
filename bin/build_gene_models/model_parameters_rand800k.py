@@ -4,7 +4,7 @@ import os
 # Change these variables when adapting for different analyses.
 
 # List of identifiers for each database you'll make:
-STUDY_NAMES = ['Muscle_Skeletal','Ovary','Whole_Blood','Liver']
+STUDY_NAMES = ['Muscle_Skeletal']#,'Ovary','Whole_Blood','Liver']
 # File names for gene and snp annotation:
 GENE_ANNOTATION_FN = 'gencode.v19.transcripts.patched_contigs.gtf.gz'
 SNP_ANNOTATION_FN = '1240k_rand800k_model_format.txt.gz'
