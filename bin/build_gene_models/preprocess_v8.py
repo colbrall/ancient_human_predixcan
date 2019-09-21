@@ -35,7 +35,7 @@ from model_parameters_v8_all import *
 print("Splitting genotype files up by chromosome...")
 for i in range(len(GENOTYPE_FNS)):
    subprocess.call(
-       ['../data_processing/split_genotype_by_chr.py',
+       ['../data_processing/split_genotype_by_chr_v8.py',
        GENOTYPE_INPUT_DIR + GENOTYPE_FNS[i],
        INTER_DIR + GENOTYPE_INTER_DIR + GENOTYPE_INTER_PREFIX[i]])
 
@@ -49,18 +49,18 @@ for i in range(len(GENOTYPE_FNS)):
 #       INTER_DIR + EXPRESSION_INTER_DIR])
 
 # Create metadata files------------------------------------------------/
-#print("Creating metadata files...")
-#geno_prefix = list(GENOTYPE_INTER_PREFIX)
-#for i in range(len(STUDY_NAMES)):
-#    command = ' '.join(['../data_processing/create_meta_data.py',
-#        '--geno', INTER_DIR + GENOTYPE_INTER_DIR + geno_prefix[0] + '.chr22.txt',
-#        '--expr', INTER_DIR + EXPRESSION_INTER_DIR + STUDY_NAMES[i] + ".txt",
-#        '--snpset', SNPSET,
-#        '--alpha', ALPHA,
-#        '--n_k_folds', N_K_FOLDS,
-#        '--rsid_label', RSID_LABEL,
-#        '--window', WINDOW,
-#        '--out_prefix', OUTPUT_DIR + 'allMetaData/' + STUDY_NAMES[i]])
-#    subprocess.call(command, shell=True)
+print("Creating metadata files...")
+geno_prefix = list(GENOTYPE_INTER_PREFIX)
+for i in range(len(STUDY_NAMES)):
+    command = ' '.join(['../data_processing/create_meta_data.py',
+        '--geno', INTER_DIR + GENOTYPE_INTER_DIR + geno_prefix[0] + '.chr22.txt',
+        '--expr', INTER_DIR + EXPRESSION_INTER_DIR + STUDY_NAMES[i] + ".txt",
+        '--snpset', SNPSET,
+        '--alpha', ALPHA,
+        '--n_k_folds', N_K_FOLDS,
+        '--rsid_label', RSID_LABEL,
+        '--window', WINDOW,
+        '--out_prefix', OUTPUT_DIR + 'allMetaData/' + STUDY_NAMES[i]])
+    subprocess.call(command, shell=True)
 
 print("Done!")

@@ -75,8 +75,11 @@ def split_genotype(geno_file, out_prefix):
             out_line = [str(mean) if i == -1 else str(i) for i in out_line]
 
             # Write line to appropriate file
-	    index = int(chr) - 1
-            geno_by_chr[index].write('\t'.join(out_line) + "\n")
+	    try:
+		index = int(chr) - 1
+                geno_by_chr[index].write('\t'.join(out_line) + "\n")
+            except: #if CHR isn't a regular one
+                continue
     for f in geno_by_chr:
         f.close()
 

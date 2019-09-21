@@ -8,7 +8,7 @@ import time
 #from model_parameters import *
 #from model_parameters_normalized import *
 #from model_parameters_top800k import *
-from model_parameters_rand800k import *
+from model_parameters_v8_all import *
 
 CMD = 'sbatch --export=study={0},expr_RDS={1},geno={2},gene_annot={3},snp_annot={4},' + \
     'n_k_folds={5},alpha={6},out_dir={7},chrom={8},snpset={9},window={10} ' + \
