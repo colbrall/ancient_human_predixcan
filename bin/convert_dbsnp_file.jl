@@ -66,7 +66,7 @@ function bedToAnno(file_path::String,out_name::String)
                         alt = split(ref,"")[1]
                     end
                 end
-                id = "$(chr)_$(l[3])_$(ref)_$(alt)_b38"
+                id = "chr$(chr)_$(l[3])_$(ref)_$(alt)_b38"
                 if id == prev1 || id == prev2 ||id == prev3
                     prev1 = prev2
                     prev2 = prev3
