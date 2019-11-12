@@ -7,16 +7,17 @@
 import subprocess
 
 #from model_parameters_top800k import *
-from model_parameters_v6p_test import *
+from model_parameters_v8_all import *
+#from model_parameters_v8_test import *
 
 for i, study in enumerate(STUDY_NAMES):
     subprocess.call(
-        ['../data_processing/make_all_results.sh',study,ALL_RESULTS_FILES[i],ALPHA,SNPSET])
+        ['../data_processing/make_all_results_v8.sh',study,ALL_RESULTS_FILES[i],ALPHA,SNPSET])
     subprocess.call(
-        ['../data_processing/make_all_betas.sh',study,ALL_BETAS_FILES[i],ALPHA,SNPSET])
-    subprocess.call(['../data_processing/make_all_logs.sh',study,ALL_LOGS_FILES[i]])
+        ['../data_processing/make_all_betas_v8.sh',study,ALL_BETAS_FILES[i],ALPHA,SNPSET])
+    subprocess.call(['../data_processing/make_all_logs_v8.sh',study,ALL_LOGS_FILES[i]])
     subprocess.call(
-        ['../data_processing/make_all_covariances.sh',study,ALL_COVARIANCES_FILES[i],ALPHA,SNPSET])
+        ['../data_processing/make_all_covariances_v8.sh',study,ALL_COVARIANCES_FILES[i],ALPHA,SNPSET])
 
 for i, study, in enumerate(STUDY_NAMES):
     cmd = '../data_processing/make_sqlite_db.py --output {0} --betas {1} --results {2} --construction {3} --meta {4}'.format(

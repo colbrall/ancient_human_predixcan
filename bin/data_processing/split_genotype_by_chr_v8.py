@@ -46,11 +46,11 @@ def split_genotype(geno_file, out_prefix):
             refAllele = in_line[3]
             effectAllele = in_line[4]
             # Skip non_single letter polymorphisms
-            if len(refAllele) > 1 or len(effectAllele) > 1:
-                continue
+            #if len(refAllele) > 1 or len(effectAllele) > 1:
+            #    continue
             # Skip ambiguous strands
-            if SNP_COMPLEMENT[refAllele] == effectAllele:
-                continue
+            #if SNP_COMPLEMENT[refAllele] == effectAllele:
+            #    continue
             varID = in_line[2]
             # Some snps have 2 rows for some reason. Attributes are nearly
             # identical. Only keep the first one found.

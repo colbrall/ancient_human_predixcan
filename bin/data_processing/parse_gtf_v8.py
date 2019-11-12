@@ -40,7 +40,7 @@ def parse_gtf(gtf_path, out_path):
             id = attr_dict['gene_id'].strip('"').split(".")[0]
             name = attr_dict['gene_name'].strip('"')
             type = attr_dict['gene_type'].strip('"')
-            if type != 'protein_coding' and type != 'processed_transcript':
+            if type != 'protein_coding' and type != 'lincRNA' and type != 'miRNA': #and type != 'processed_transcript' 
                 continue
             # Concatenate together and write out to file.
             out_line = '\t'.join([chr, id, name, start, end, type]) + '\n'

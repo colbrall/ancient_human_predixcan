@@ -7,32 +7,33 @@ import sys
 #from model_parameters_normalized import *
 #from model_parameters_1240k import *
 #from model_parameters_top800k import *
-from model_parameters_rand800k import *
+#from model_parameters_rand800k import *
+from model_parameters_v6p_test import *
 
 # Process gene annotation----------------------------------------------/
-#print("Parsing gene annotation...")
-#subprocess.call(
-#    ['../data_processing/parse_gtf.py',
-#    INPUT_DIR + GENE_ANN_DIR + GENE_ANNOTATION_FN,
-#    INTER_DIR + GENE_ANNOT_INTER1
-#    ])
-#print("Saving each gene annotation file as RDS object")
-#subprocess.call(
-#    ['Rscript', '../data_processing/geno_annot_to_RDS.R',
-#    INTER_DIR + GENE_ANNOT_INTER1,
-#    INTER_DIR + GENE_ANNOT_INTER2])
+print("Parsing gene annotation...")
+subprocess.call(
+    ['../data_processing/parse_gtf.py',
+    INTER_DIR + GENE_ANN_DIR + GENE_ANNOTATION_FN,
+    INTER_DIR + GENE_ANNOT_INTER1
+    ])
+print("Saving each gene annotation file as RDS object")
+subprocess.call(
+    ['Rscript', '../data_processing/geno_annot_to_RDS.R',
+    INTER_DIR + GENE_ANNOT_INTER1,
+    INTER_DIR + GENE_ANNOT_INTER2])
 
 # Process snp annotation-----------------------------------------------/
-print("Splitting SNP annotation file up by chromosome...")
-subprocess.call(
-    ['../data_processing/split_snp_annot_by_chr.py',
-    SNP_ANN_DIR + SNP_ANNOTATION_FN,
-    INTER_DIR + SNP_ANN_INTER_DIR + SNP_ANN_INTER_PREFIX1
-    ])
-print("Saving each snp annotation file as RDS object")
-subprocess.call(
-    ['Rscript', '../data_processing/snp_annot_to_RDS.R',
-    INTER_DIR + SNP_ANN_INTER_DIR + SNP_ANN_INTER_PREFIX2])
+#print("Splitting SNP annotation file up by chromosome...")
+#subprocess.call(
+#    ['../data_processing/split_snp_annot_by_chr.py',
+#    SNP_ANN_DIR + SNP_ANNOTATION_FN,
+#    INTER_DIR + SNP_ANN_INTER_DIR + SNP_ANN_INTER_PREFIX1
+#    ])
+#print("Saving each snp annotation file as RDS object")
+#subprocess.call(
+#    ['Rscript', '../data_processing/snp_annot_to_RDS.R',
+#    INTER_DIR + SNP_ANN_INTER_DIR + SNP_ANN_INTER_PREFIX2])
 
 # Process genotype files-----------------------------------------------/
 #print("Splitting genotype files up by chromosome...")

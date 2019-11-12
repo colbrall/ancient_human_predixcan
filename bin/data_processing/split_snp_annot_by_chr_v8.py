@@ -36,6 +36,10 @@ def split_snp_annot(annot_file, out_prefix):
     snp_by_chr = [open(f, 'w') for f in snps_by_chr_files]
     # Write header in each file.
     header = '\t'.join(HEADER_FIELDS)+'\n'
+    missingrs = 0
+    comp = 0
+    indels = 0
+    multi = 0
     for f in snp_by_chr:
         f.write(header)
     with gzip.open(annot_file, 'r') as ann:
@@ -44,7 +48,7 @@ def split_snp_annot(annot_file, out_prefix):
         # Extract rows from input and write to body in appropriate output.
         for line in ann:
             if line.startswith('#'): continue
-            if line.startswith('23'): break
+            if line.startswith('23'): continue
             attrs = line.split()
             chr = attrs[0]
             pos = attrs[1]
@@ -53,14 +57,18 @@ def split_snp_annot(annot_file, out_prefix):
             effectAllele = attrs[4]
             rsid = attrs[5]
             # Skip non-single letter polymorphisms
-            if len(refAllele) > 1 or len(effectAllele) > 1:
-                continue
-            if refAllele not in SNP_COMPLEMENT.keys(): #skips a few mishandled indels
-                continue
+            #if len(refAllele) > 1 or len(effectAllele) > 1:
+            #    multi +=1
+            #    continue
+            #if refAllele not in SNP_COMPLEMENT.keys(): #skips a few mishandled indels
+            #    indels +=1
+            #    continue
             # Skip ambiguous strands
-            if SNP_COMPLEMENT[refAllele] == effectAllele:
-                continue
+            #if SNP_COMPLEMENT[refAllele] == effectAllele:
+            #    comp += 1
+            #    continue
             if rsid == '.':
+                missingrs +=1
                 continue
             index = int(chr) - 1
             row = '\t'.join([chr,pos,varID,refAllele,effectAllele,rsid])+'\n'
@@ -68,6 +76,10 @@ def split_snp_annot(annot_file, out_prefix):
     # Close connection to each output file.
     for f in snp_by_chr:
         f.close()
+    #print("Multi = ", multi)
+    #print("indels = ",indels)
+    #print("comp = ",comp)
+    #print("missingrs = ",missingrs)
 
 if __name__ == '__main__':
     annot_file = sys.argv[1]

@@ -24,6 +24,7 @@
 #################
 # Job Execution #
 #################
+source /etc/profile.d/lmod.sh
 
 module load GCC/5.4.0-2.26  OpenMPI/1.10.3 R/3.3.3
 Rscript ./create_model.R $study $expr_RDS $geno $gene_annot $snp_annot \

@@ -6,7 +6,7 @@ allResults=$2
 alpha=$3
 snpset=$4
 i=0
-for resultsfile in $(ls ../../data/gtex_v6p_data/model_by_chr/working_TW_${tissue}_exp_10-foldCV_elasticNet_alpha${alpha}_${snpset}_chr*); do
+for resultsfile in $(ls ../../data/gtex_v8_data/model_by_chr/working_TW_${tissue}_exp_10-foldCV_elasticNet_alpha${alpha}_${snpset}_chr*); do
         if [ $i -eq 0 ] ; then
                 head -n 1 $resultsfile > $allResults
                 i=1

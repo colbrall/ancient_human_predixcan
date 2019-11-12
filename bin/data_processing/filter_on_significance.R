@@ -30,9 +30,11 @@ package_db <- function(db_in, db_out, gene_annot) {
   qobj <- qvalue(extra_df$pval, fdr.level = 0.05)
   extra_df$pred.perf.qval <- qobj$qvalues
   extra_df$significant <- qobj$significant
+
+  #pull significant genes
   extra_filtered <- extra_df %>%
     rename(pred.perf.pval=pval,n.snps.in.model=n.snps,pred.perf.R2=R2) %>%
-    filter(significant == TRUE) %>%
+    filter(significant == TRUE & pred.perf.R2 > 0.01) %>%
     select(-significant)
   sig_genes <- extra_filtered$gene
   dbWriteTable(out_conn, "extra", extra_filtered)
@@ -47,7 +49,7 @@ package_db <- function(db_in, db_out, gene_annot) {
   dbGetQuery(out_conn, "CREATE INDEX weights_rsid ON weights (rsid)")
   dbGetQuery(out_conn, "CREATE INDEX weights_gene ON weights (gene)")
   dbGetQuery(out_conn, "CREATE INDEX weights_rsid_gene ON weights (rsid, gene)")
-  
+
   dbDisconnect(in_conn)
   dbDisconnect(out_conn)
 }

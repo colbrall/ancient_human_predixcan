@@ -4,7 +4,7 @@ import os
 # Change these variables when adapting for different analyses.
 
 # List of identifiers for each database you'll make:
-STUDY_NAMES = ['Muscle_Skeletal','Ovary','Whole_Blood','Liver']
+STUDY_NAMES = ['Muscle_Skeletal']#,'Ovary']
 # STUDY_NAMES = ['Adipose_Subcutaneous','Adipose_Visceral_Omentum','Adrenal_Gland','Artery_Aorta','Artery_Coronary','Artery_Tibial',
     #'Brain_Amygdala','Brain_Anterior_cingulate_cortex_BA24','Brain_Caudate_basal_ganglia','Brain_Cerebellar_Hemisphere','Brain_Cerebellum',
     #'Brain_Cortex','Brain_Frontal_Cortex_BA9','Brain_Hippocampus','Brain_Hypothalamus','Brain_Nucleus_accumbens_basal_ganglia',
@@ -41,7 +41,7 @@ GENOTYPE_INTER_PREFIX = map(lambda x: x[:-7], GENOTYPE_FNS)
 # Define directories---------------------------------------------------/
 INPUT_DIR = '/dors/capra_lab/data/genotype-tissue_expression_project/v8/'
 INTER_DIR = '../../data/gtex_v8_data/'
-OUTPUT_DIR = '../../data/v8_models/full_v8_models/'
+OUTPUT_DIR = '../../temp/test/v8_full/'
 GENE_ANN_DIR = '/dors/capra_lab/projects/ancient_human_predixcan/data/gtex_v8_data/'
 SNP_ANN_DIR = '/dors/capra_lab/projects/ancient_human_predixcan/data/snp_lists/'
 SNP_ANN_INTER_DIR = 'snp_anno_gtexv8All/'
