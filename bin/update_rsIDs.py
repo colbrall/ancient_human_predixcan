@@ -15,7 +15,7 @@ import sys
 import string
 import gzip
 
-def dosageConvert(file_list,ref_file,rs_col):
+def dosageConvert(file_list,rs_col,ref_file):
     for fil in file_list:
         dict = {} #{loc:rsID}
         with gzip.open(fil, 'rt') as f:
@@ -26,7 +26,7 @@ def dosageConvert(file_list,ref_file,rs_col):
             with gzip.open(ref_file,'rt') as g: #dict with PrediXcan rsIDs
                 for line in g:
                     if line.startswith(chr + "\t"):
-                        dict[line.split("\t")[1]] = (line.split("\t")[rs_col],line.split("\t")[3],line.split("\t")[4])
+                        dict[line.split("\t")[1]] = (line.split("\t")[int(rs_col)],line.split("\t")[3],line.split("\t")[4])
 #           output
             name = "chr" + chr + ".rs_updated.dos"
             of = open(name,"w")
@@ -38,13 +38,11 @@ def dosageConvert(file_list,ref_file,rs_col):
                 if l[2] in dict:
                     if l[3] == dict[l[2]][1] or l[3] == dict[l[2]][2]: #check whether predixcan ref allele is present
                         if l[4] == dict[l[2]][1] or l[4] == dict[l[2]][2] or l[4] == ".": #check whether predixcan alt allele is present
-                            l[1]= dict[l[2]][0] #plug in predixcan ids where applicable
-                        else: l[1] = "."
-                    else: l[1] = "."
-                if l[1].startswith("rs"): of.write("\t".join(l)) #only write lines that end up w/ an rsID
+                            l[1]= dict[l[2]][0] #plug in predixcan ids where applicable and write line out
+                            of.write("\t".join(l))
             of.close()
 
-def bedConvert(file_list,ref_file,rs_col):
+def bedConvert(file_list,rs_col,ref_file):
     dict = {} #{loc:rsID}
     with gzip.open(ref_file,'r') as g: #dict with PrediXcan rsIDs
         for line in g:
