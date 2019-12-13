@@ -24,8 +24,9 @@ def dosageConvert(file_list,rs_col,ref_file):
             if chr == "": chr = f.readlines(1)[0].split('\t')[0].split('r')[-1]
             f.seek(0)
             with gzip.open(ref_file,'rt') as g: #dict with PrediXcan rsIDs
-                for line in g:
-                    if line.startswith(chr + "\t"):
+                for l in g:
+                    if l.startswith(chr + "\t"):
+                        line = l.rstrip('\n')
                         dict[line.split("\t")[1]] = (line.split("\t")[int(rs_col)],line.split("\t")[3],line.split("\t")[4])
 #           output
             name = "chr" + chr + ".rs_updated.dos"

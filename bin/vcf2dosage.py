@@ -50,7 +50,7 @@ def update_vcf(path): #prufer 2017 VCFs
             if line.startswith(comment_char): continue
             l = str.split(line.strip(),delim)
             if line.startswith("#CHROM"):
-                print "#chr\tsnp_id\tpos\ta1\ta2\tMAF\t%s" % (l[9])
+                print "#chr\tsnp_id\tpos\ta1\ta2\tMAF\t%s" % ('\t'.join(l[9:]))
                 continue
             chrm = l[0]
             pos = l[1]
@@ -59,14 +59,15 @@ def update_vcf(path): #prufer 2017 VCFs
             a2 = l[4]
             maf = "."
             ac = []
-            gt = str.split(l[9],":")[0]
-            if gt == "0/0":
-                ac.append("0")
-            elif gt == "0/1" or gt == "1/0":
-                ac.append("1")
-            else:
-                ac.append("2")
-            print "%s\t%s\t%s\t%s\t%s\t%s\t%s" % (chrm,id,pos,a1,a2,maf,ac[0])
+            types = [str.split(x,":")[0] for x in l[9:]]
+            for gt in types:
+                if gt == "0/0":
+                    ac.append("0")
+                elif gt == "0/1" or gt == "1/0":
+                    ac.append("1")
+                else:
+                    ac.append("2")
+            print "%s\t%s\t%s\t%s\t%s\t%s\t%s" % (chrm,id,pos,a1,a2,maf,'\t'.join(ac))
 
 def old_vcf(line): #original altai, denisovan
     chrm = line[0]
