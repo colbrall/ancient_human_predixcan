@@ -2,6 +2,7 @@
 # Python 2.7.4
 # modified by Laura Colbran to fix ref/alt bug Nov. 2017
 # modified by Laura Colbran to handle NA values in dosages July 2019
+# modified by LC to add function to make complements for indels. Dec. 2019
 
 import argparse
 from collections import defaultdict
@@ -99,13 +100,19 @@ class TranscriptionMatrix:
         else:
             return [tup[0] for tup in WeightsDB(self.beta_file).query("SELECT DISTINCT gene FROM weights ORDER BY gene")]
 
+    def getComplements(allele):
+        comp = ""
+        for ch in allele:
+            comp += self.complements[ch]
+        return comp
+
     def update(self, gene, weight, ref_allele, allele, dosage_row):
         if self.D is None:
             self.gene_list = self.get_gene_list()
             self.gene_index = { gene:k for (k, gene) in enumerate(self.gene_list) }
             self.D = np.zeros((len(self.gene_list), len(dosage_row))) # Genes x Cases
         if gene in self.gene_index: #assumes strands are aligned to PrediXcan reference and dosage coding 0 to 2
-            if ref_allele == allele or self.complements[ref_allele] == allele: # assumes non-ambiguous SNPs to resolve strand issues:
+            if ref_allele == allele or getComplements(ref_allele) == allele: # assumes non-ambiguous SNPs to resolve strand issues:
                 self.D[self.gene_index[gene],] += dosage_row * weight
             else:
                 self.D[self.gene_index[gene],] += (2-dosage_row) * weight # Update all cases for that gene
