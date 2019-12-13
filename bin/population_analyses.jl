@@ -2,8 +2,7 @@
 # @author Laura Colbran
 # functions to compare PrediXcan results in archaics to Eric's bioVU results or 1kG
 #
-# contains functions for calculating empirical p-values, calling DR genes, direction bias, PCA,
-# and computing a distance matrix for a tree
+# contains functions for comparing sets of expression predictions
 #
 # runs with Julia version 1.1 and requires R3.3 or greater to be present in the environment with package dendextend
 
@@ -23,8 +22,6 @@ default(color=:blue,leg=false,grid=false,fontfamily="arial",alpha=0.5)
 
 const DENDRO_SOURCE =
         "/dors/capra_lab/projects/neanderthal_predixcan/bin/WriteDendrogram.R"
-#const N = 18621 #number people in population for empirical p-value calculation
-const N = 2504
 
 # parses command-line arguments
 function parse_commandline()
@@ -74,34 +71,6 @@ function readGeneDF(f_path::String)
   end
 end
 
-# reads file into DataFrame
-function readDF(f_path::String)
-  if ispath(f_path)
-    df = CSV.read(GZip.open(f_path);delim='\t',allowmissing=:none, normalizenames=false)
-  else
-    df = "NA"
-  end
-  return df
-end
-
-# reads population expression values into a dictionary
-function readDict(path::String)
-  dict = Dict{String,Array{SubString{String},1}}()
-  try
-    GZip.open(path) do f
-      for line in eachline(f)
-        if startswith(line,"ENSG")
-          e = split(chomp(line),"\t")
-          dict[e[1]] = e[2:end]
-        end
-      end
-    end
-    return dict
-  catch
-    return "NA"
-  end
-end
-
 # reads population and ids into a dictionary
 function popDict(path::String)
   dict = Dict{SubString{String},SubString{String}}()
@@ -117,6 +86,7 @@ function popDict(path::String)
     return "NA"
   end
 end
+
 # my tissue names -> Eric's tissue names
 function mapNames()
   return Dict{String,String}(
@@ -149,27 +119,6 @@ function mapNames()
     "prostate" => "prostate","ovary" => "Ovary", "vagina" => "vagina", "testis" => "testis",
     "uterus" => "uterus", "thyroid" => "thyroid","left_ventricle" => "left_ventricle")
 end
-
-# reverses key:value dictionary; naive-- doesn't check for unique values
-function flipDict(dict::Dict{String,String})
-  new_dict = Dict{String,String}()
-  for key in keys(dict)
-    new_dict[dict[key]] = key
-  end
-  return new_dict
-end
-
-#1kG pop -> superpop
-function thousGenSuperPopDict()
-  return Dict{String,String}(
-    "GWD" => "AFR", "MSL" => "AFR","ESN" => "AFR", "MXL" => "AMR", "CLM" => "AMR",
-    "PEL" => "AMR", "TSI" => "EUR", "IBS" => "EUR", "PJL" => "SAS", "STU" => "SAS",
-    "ITU" => "SAS", "GBR" => "EUR", "CHB" => "EAS", "JPT" => "EAS", "CDX" => "EAS",
-    "YRI" => "AFR", "LWK" => "AFR", "CEU" => "EUR", "GIH" => "SAS", "ASW" => "AFR",
-    "CHS" => "EAS", "KHV" => "EAS", "ACB" => "AFR", "PUR" => "AMR", "BEB" => "SAS",
-    "FIN" => "EUR")
-end
-
 
 # assembles distance matrix
 function distMat(pop_dir::Array{String,1},filter,to_excl::Bool,spear::Bool,pop_dict::Dict{SubString{String},SubString{String}},tiss::String)
