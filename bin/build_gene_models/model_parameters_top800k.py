@@ -35,7 +35,7 @@ GENOTYPE_INTER_PREFIX = map(lambda x: x[:-7], GENOTYPE_FNS)
 # Define directories---------------------------------------------------/
 INPUT_DIR = '/dors/capra_lab/data/genotype-tissue_expression_project/v8/'
 INTER_DIR = '../../data/gtex_v8_data/'
-OUTPUT_DIR = '../../data/top800k_models/'
+OUTPUT_DIR = '../../data/v8_models/top800k_models/'
 GENE_ANN_DIR = '/dors/capra_lab/projects/ancient_human_predixcan/data/gtex_v8_data/'
 SNP_ANN_DIR = '/dors/capra_lab/projects/ancient_human_predixcan/data/snp_lists/'
 SNP_ANN_INTER_DIR = 'snp_anno_top800k/'

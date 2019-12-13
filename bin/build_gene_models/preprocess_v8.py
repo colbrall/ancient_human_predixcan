@@ -5,8 +5,8 @@ import subprocess
 import sys
 
 # from model_parameters_v8_all import *
-from model_parameters_1240k import *
-# from model_parameters_top800k import *
+# from model_parameters_1240k import *
+from model_parameters_top800k import *
 
 # Process gene annotation----------------------------------------------/WORKING
 # print("Parsing gene annotation...")

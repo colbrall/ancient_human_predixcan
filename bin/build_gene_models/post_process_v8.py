@@ -6,9 +6,9 @@
 
 import subprocess
 
-#from model_parameters_top800k import *
-from model_parameters_v8_all import *
-#from model_parameters_v8_test import *
+from model_parameters_top800k import *
+# from model_parameters_v8_all import *
+#from model_parameters_1240k import *
 
 for i, study in enumerate(STUDY_NAMES):
     subprocess.call(
