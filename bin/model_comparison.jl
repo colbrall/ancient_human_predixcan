@@ -11,6 +11,7 @@ using HypothesisTests
 using StatsPlots
 using SQLite
 using GZip
+using CSV
 
 default(color=:blue,leg=false,grid=false,fontfamily="arial",alpha=0.5)
 
@@ -25,6 +26,13 @@ function parse_commandline()
             required = true
         "--performance"
             help = "to run comparison between certain models' performances and SNP counts across different training instances"
+            action = :store_true
+        "--reference","-r"
+            nargs=1
+            help = "paths to the reference database"
+            arg_type = String
+        "--box"
+            help = "to make boxplots of performance metrics"
             action = :store_true
         # "--snps"
         #     help = "to compare specific SNPs and their weights"
@@ -79,10 +87,24 @@ end
 function performance(db_files::Array{String,1})
     q = "SELECT * FROM 'extra'"
     models_1 = DataFrame(SQLite.Query(SQLite.DB(db_files[1]),q))
-#    models_1 = models_1[models_1[Symbol("pred.perf.R2")] .> 0.1,:]
+    for i in 1:nrow(models_1)
+        models_1[i,:gene] = split(models_1[i,:gene],".")[1]
+    end
     models_2 = DataFrame(SQLite.Query(SQLite.DB(db_files[2]),q))
+    for i in 1:nrow(models_2)
+        models_2[i,:gene] = split(models_2[i,:gene],".")[1]
+    end
+    if :R2 in names(models_1)
+        rename!(models_1, :R2 => Symbol("pred.perf.R2"))
+        rename!(models_1, Symbol("n.snps") => Symbol("n.snps.in.model"))
+    end
+    if :R2 in names(models_2)
+        rename!(models_2, :R2 => Symbol("pred.perf.R2"))
+        rename!(models_2, Symbol("n.snps") => Symbol("n.snps.in.model"))
+    end
     println("Number of models in $(db_files[1]): $(nrow(models_1))")
     println("R2:")
+    describe(models_1[Symbol("pred.perf.R2")])
     describe(models_1[Symbol("pred.perf.R2")])
     println("NumSNPs:")
     describe(models_1[Symbol("n.snps.in.model")])
@@ -91,6 +113,10 @@ function performance(db_files::Array{String,1})
     describe(models_2[Symbol("pred.perf.R2")])
     println("NumSNPs:")
     describe(models_2[Symbol("n.snps.in.model")])
+    CSV.write("models_1_all.txt",models_1;delim='\t')
+    CSV.write("models_2_all.txt",models_2;delim='\t')
+    CSV.write("models_1_unique.txt",join(models_1,models_2,on=:gene,kind=:anti);delim='\t')
+    CSV.write("models_2_unique.txt",join(models_2,models_1,on=:gene,kind=:anti);delim='\t')
     all_models = join(models_1,models_2,on=:gene,kind=:inner,makeunique=true)
     println("Number models shared: $(nrow(all_models))")
 
@@ -127,6 +153,8 @@ function performance(db_files::Array{String,1})
     nsnps_2_plot = histogram(models_2[Symbol("n.snps.in.model")],xlabel="Num_SNPs",ylabel="Num. Models",bins=50,margin=10Plots.mm)
     nsnps_2_plot = histogram!(all_models[Symbol("n.snps.in.model_1")],bins=50,color=:red)
     Plots.savefig(nsnps_2_plot,"arg2_nsnps.pdf")
+    r2_corr_plot = scatter(all_models[Symbol("pred.perf.R2")],all_models[Symbol("pred.perf.R2_1")],xlabel="v6p r2",ylabel="v8 r2",margin=10Plots.mm)
+    Plots.savefig(r2_corr_plot,"r2_corrplot.pdf")
 end
 
 # analyses of missing SNPs in models
@@ -168,6 +196,43 @@ function missingSNPs(db_files::Array{String,1},genome_path::String)
     end
 end
 
+# plots boxplots of performance metrics
+function boxplots(ref_file::Array{String,1},db_files::Array{String,1})
+    q = "SELECT * FROM 'extra'"
+    ref_models = DataFrame(SQLite.Query(SQLite.DB(ref_file[1]),q))
+    for i in 1:nrow(ref_models)
+        ref_models[i,:gene] = split(ref_models[i,:gene],".")[1]
+    end
+    if :R2 in names(ref_models)
+        rename!(ref_models, :R2 => Symbol("pred.perf.R2"))
+        rename!(ref_models, Symbol("n.snps") => Symbol("n.snps.in.model"))
+    end
+    r2_boxes = DataFrames.DataFrame(R2 = ref_models[Symbol("pred.perf.R2")], set = repeat(["ref_$(nrow(ref_models))"],nrow(ref_models)),cat= repeat(["ref"],nrow(ref_models)))
+    nsnps_boxes = DataFrames.DataFrame(nsnps = ref_models[Symbol("n.snps.in.model")], set = repeat(["ref_$(nrow(ref_models))"],nrow(ref_models)),cat= repeat(["ref"],nrow(ref_models)))
+    i = 1
+    for file in db_files
+        println("$(i)_comp = $file")
+        models = DataFrame(SQLite.Query(SQLite.DB(file),q))
+        for j in 1:nrow(models)
+            models[j,:gene] = split(models[j,:gene],".")[1]
+        end
+        if :R2 in names(models)
+            rename!(models, :R2 => Symbol("pred.perf.R2"))
+            rename!(models, Symbol("n.snps") => Symbol("n.snps.in.model"))
+        end
+        append!(r2_boxes,DataFrames.DataFrame(R2 = models[Symbol("pred.perf.R2")], set = repeat(["$(i)_comp_$(nrow(models))"],nrow(models)),cat= repeat(["comp"],nrow(models))))
+        append!(nsnps_boxes,DataFrames.DataFrame(nsnps = models[Symbol("n.snps.in.model")], set = repeat(["$(i)_comp_$(nrow(models))"],nrow(models)),cat= repeat(["comp"],nrow(models))))
+        models = join(ref_models,models, on=:gene,kind=:inner,makeunique=true)
+        append!(r2_boxes,DataFrames.DataFrame(R2 = models[Symbol("pred.perf.R2")], set = repeat(["$(i)_shared_$(nrow(models))"],nrow(models)),cat= repeat(["shared"],nrow(models))))
+        append!(nsnps_boxes,DataFrames.DataFrame(nsnps = models[Symbol("n.snps.in.model")], set = repeat(["$(i)_shared_$(nrow(models))"],nrow(models)),cat= repeat(["shared"],nrow(models))))
+        i+=1
+    end
+    r2_plot = boxplot(r2_boxes[:set], r2_boxes[:R2],notch = true, ylabel="R2",xlabel= "Training Set",margin=10Plots.mm,outliers=false)
+    Plots.savefig(r2_plot,"boxes_r2.pdf")
+    nsnps_plot = boxplot(nsnps_boxes[:set], nsnps_boxes[:nsnps],notch = true, ylabel="N_SNPs",xlabel= "Training Set",margin=10Plots.mm,outliers=false)
+    Plots.savefig(nsnps_plot,"boxes_nsnps.pdf")
+end
+
 function main()
     parsed_args = parse_commandline()
     if parsed_args["performance"]
@@ -175,6 +240,9 @@ function main()
     end
     if parsed_args["missingness"]
         missingSNPs(parsed_args["databases"],parsed_args["genomes"])
+    end
+    if parsed_args["box"]
+        boxplots(parsed_args["reference"],parsed_args["databases"])
     end
 end
 
