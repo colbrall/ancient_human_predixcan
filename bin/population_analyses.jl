@@ -137,15 +137,13 @@ function mapNames()
     "Esophagus_Gastroesophageal_Junction" => "Esophagus_Gastroesophageal_Junction",
     "Esophagus_Mucosa" => "Esophagus_Mucosa","Esophagus_Muscularis" => "Esophagus_Muscularis",
     "Heart_Atrial_Appendage" => "Heart_Atrial_Appendage","Heart_Left_Ventricle" => "Heart_Left_Ventricle",
-    "Kidney_Cortex" => "Kidney_Cortex","Liver" => "Liver","Lung" => "Lung",
+    "Kidney_Cortex" => "Kidney_Cortex",
     "Minor_Salivary_Gland" => "Minor_Salivary_Gland","Muscle_Skeletal" => "Muscle_Skeletal",
-    "Nerve_Tibial" => "Nerve_Tibial","Ovary" => "Ovary","Pancreas" => "Pancreas",
-    "Pituitary" => "Pituitary","Prostate" => "Prostate",
+    "Nerve_Tibial" => "Nerve_Tibial",
     "Skin_Not_Sun_Exposed_Suprapubic" => "Skin_Not_Sun_Exposed_Suprapubic",
     "Skin_Sun_Exposed_Lower_leg" => "Skin_Sun_Exposed_Lower_leg",
     "Small_Intestine_Terminal_Ileum" => "Small_Intestine_Terminal_Ileum",
-    "Spleen" => "Spleen","Stomach" => "Stomach","Testis" => "Testis","Thyroid" => "Thyroid",
-    "Uterus" => "Uterus","Vagina" => "Vagina","Whole_Blood" => "Whole_Blood")
+    "Whole_Blood" => "Whole_Blood")
 end
 
 # assembles distance matrix
