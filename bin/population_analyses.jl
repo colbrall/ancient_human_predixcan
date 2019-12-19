@@ -239,27 +239,32 @@ end
 #correlation across genes by threshold distribution
 function geneSim(base_pop::String,pop_dir::Array{String,1})
     map_dict = mapNames()::Dict{String,String}
-    out = DataFrame(gene=String[],rho=Float64[],tissue=String[])
+    out = DataFrame(gene=String[],r=Float64[],tissue=String[])
     for tiss in keys(map_dict)
-        println("$tiss")
         base = readGeneDF("$(realpath(base_pop))/$(map_dict[tiss])_elasticNet0_0.5.full.gz")
+        if base == "NA" continue end
         for pop_file in pop_dir
             pop = readGeneDF("$(realpath(pop_file))/$(map_dict[tiss])_elasticNet0_0.5.full.gz")
+            if pop == "NA"
+                continue
+            end
+            println("$pop_file, $tiss")
             for i in 1:nrow(base)
                 tmp = DataFrame(full=Float64[],sim=Float64[])
                 for id in names(pop)[2:end]
                     base_id = split(String(id),"_")[1]
-                    tmp = vcat(tmp,DataFrame(full=[base[i,Symbol(base_id)]],sim=[pop[i,id]]))
+                    if length(pop[pop[:,1] .== base[i,1],id]) == 0 break end
+                    tmp = vcat(tmp,DataFrame(full=[base[i,Symbol(base_id)]],sim=pop[pop[:,1] .== base[i,1],id]))
                 end
-                out = vcat(out,DataFrame(gene=base[i,:gene_id],rho=cor(tmp[:full],tmp[:sim]),tissue=tiss))
+                #println(first(tmp,6))
+                if nrow(tmp) == 0 continue end
+                out = vcat(out,DataFrame(gene=base[i,:gene_id],r=cor(tmp[:full],tmp[:sim]),tissue=tiss))
             end
         end
         #maybe add plot by tiss?
     end
-    println(first(out,10))
-    println(nrow(out))
-    dist_plot = histogram(out[:rho],xlabel="Rho",ylabel="Num. Models",bins=100,margin=10Plots.mm)
-    Plots.savefig(dist_plot,"all_gene_rho.pdf")
+    dist_plot = histogram(out[:r],xlabel="r",ylabel="Num. Models",bins=100,margin=10Plots.mm)
+    Plots.savefig(dist_plot,"all_gene_r.pdf")
 end
 
 function main()
