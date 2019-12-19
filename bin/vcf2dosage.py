@@ -65,8 +65,10 @@ def update_vcf(path): #prufer 2017 VCFs
                     ac.append("0")
                 elif gt == "0/1" or gt == "1/0":
                     ac.append("1")
-                else:
+                elif gt == "1/1"
                     ac.append("2")
+                else:
+                    ac.append("NA")
             print "%s\t%s\t%s\t%s\t%s\t%s\t%s" % (chrm,id,pos,a1,a2,maf,'\t'.join(ac))
 
 def old_vcf(line): #original altai, denisovan
