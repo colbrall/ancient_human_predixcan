@@ -126,7 +126,7 @@ function matchMissing(base_dir::String,id_path::String,out_dir::String,match_dir
                     if startswith(line, "#") continue end
                     to_match[split(line,"\t")[3]] = split(chomp(line),"\t")[7:end]
                 end
-                println(length(keys(to_match)))
+                #println(length(keys(to_match)))
                 #println(keys(to_match))
                 for in_line in eachline(inf)
                     if startswith(in_line, "#") continue end
