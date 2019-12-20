@@ -294,9 +294,9 @@ function snpSummary(snp_file::String)
 end
 
 function sampleSummary(anno_file::String,snp_file::String, geno_dir::String,ind_file::String,threshold::Float64,info_file::String,map_file::String)
-    anno_file = "../../data/ancient_dna/reich_compilation/v37/v37.2.1240K.clean4.anno"
-    map_file =  "data/reich_ancient_humans/mapped_sample_ids.csv"
-    info_file = "data/aDNA_sources.csv"
+    #anno_file = "../../data/ancient_dna/reich_compilation/v37/v37.2.1240K.clean4.anno"
+    #map_file =  "data/reich_ancient_humans/mapped_sample_ids.csv"
+    #info_file = "data/aDNA_sources.csv"
     anno = parseAnnoFile(anno_file)
     anno = anno[anno[:assessment] .!= "no",:]
     println("Number of Samples at Start: $(nrow(anno))")

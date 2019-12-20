@@ -141,7 +141,6 @@ function matchMissing(base_dir::String,id_path::String,out_dir::String,match_dir
                 end
             end
         end
-        exit()
     end
 end
 

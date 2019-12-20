@@ -100,7 +100,7 @@ class TranscriptionMatrix:
         else:
             return [tup[0] for tup in WeightsDB(self.beta_file).query("SELECT DISTINCT gene FROM weights ORDER BY gene")]
 
-    def getComplements(allele):
+    def getComplements(self,allele):
         comp = ""
         for ch in allele:
             comp += self.complements[ch]
@@ -112,7 +112,7 @@ class TranscriptionMatrix:
             self.gene_index = { gene:k for (k, gene) in enumerate(self.gene_list) }
             self.D = np.zeros((len(self.gene_list), len(dosage_row))) # Genes x Cases
         if gene in self.gene_index: #assumes strands are aligned to PrediXcan reference and dosage coding 0 to 2
-            if ref_allele == allele or getComplements(ref_allele) == allele: # assumes non-ambiguous SNPs to resolve strand issues:
+            if ref_allele == allele or self.getComplements(ref_allele) == allele: # assumes non-ambiguous SNPs to resolve strand issues:
                 self.D[self.gene_index[gene],] += dosage_row * weight
             else:
                 self.D[self.gene_index[gene],] += (2-dosage_row) * weight # Update all cases for that gene
