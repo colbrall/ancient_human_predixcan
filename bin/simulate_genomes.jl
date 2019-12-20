@@ -51,6 +51,11 @@ function parse_commandline()
             help = "directory of dosage files for individuals to match to"
             arg_type = String
 
+        "--prefix","-p"
+            help = "file prefix for dosage files in --matches. everything prior to chr number"
+            arg_type = String
+            default = "chr"
+
     end
     return parse_args(s)
 end
@@ -92,18 +97,18 @@ function matchRandom(base_dir::String,num::Int64,id_path::String,out_dir::String
     end
 end
 
-# subsets genotype data to match pattern of missing SNPs in another set of individuals
-# works as expected only if the two have the same SNPs in the same order.
-function matchMissing(base_dir::String,id_path::String,out_dir::String,match_dir::String)
+# subsets genotype data to mask missing SNPs in another set of individuals
+function matchMissing(base_dir::String,id_path::String,out_dir::String,match_dir::String,prefix::String)
     ids = CSV.read(id_path,delim='\t';header=["ind_id","index"],allowmissing=:none) #id, and column number of its genotype
     sampled = false
     picked = DataFrame(ind_id=String[],index=Int64[])
     for item in readdir(base_dir)
         if !endswith(item,".dos.gz") continue end
-        chr = split(item,".")[1]
-        match_file = filter(f-> startswith(f,chr),readdir(match_dir))[1]
-        GZip.open("$base_dir/$item","r") do inf
-            GZip.open("$match_dir/$match_file","r") do matchf
+        println(item)
+        chr = split(split(item,".")[1],"r")[end]
+        match_file = filter(f-> startswith(f,"$(prefix)$(chr)"),readdir(match_dir))[1]
+        GZip.open("$base_dir$item","r") do inf
+            GZip.open("$match_dir$match_file","r") do matchf
                 if !sampled #choose individual to downsample
                     num_to_match = length(split(readline(matchf),'\t'))-6
                     picked = ids[sample(axes(ids,1),1),:]
@@ -116,19 +121,27 @@ function matchMissing(base_dir::String,id_path::String,out_dir::String,match_dir
                     seek(matchf,0)
                 end
                 out_f = GZip.open("$(realpath(out_dir))/$(join(split(item,".")[1:(length(split(item,"."))-2)],".")).matched.dos.gz","w")
+                to_match = Dict{SubString{String},Array{SubString{String},1}}()
+                for line in eachline(matchf)
+                    if startswith(line, "#") continue end
+                    to_match[split(line,"\t")[3]] = split(chomp(line),"\t")[7:end]
+                end
+                println(length(keys(to_match)))
+                #println(keys(to_match))
                 for in_line in eachline(inf)
                     if startswith(in_line, "#") continue end
                     info = join(split(in_line,"\t")[1:6],"\t")
                     #println(info)
                     pop = split(chomp(in_line),"\t")[7:end][picked[:index]]
                     #println(pop)
-                    match_line = split(chomp(readline(matchf)),"\t")[7:end]
-                    miss_inds = findall(i->(!isequal(i,"0") && !isequal(i,"1") && !isequal(i,"2")),match_line)
+                    miss_inds = findall(i->(!isequal(i,"0") && !isequal(i,"1") && !isequal(i,"2")),get(to_match,split(in_line,"\t")[3],[]))
+                    #println("miss_inds length=$(length(miss_inds))")
                     pop[miss_inds] .= "NA"
                     write(out_f,"$(info)\t$(join(pop,"\t"))\n")
                 end
             end
         end
+        exit()
     end
 end
 
@@ -139,7 +152,7 @@ function main()
         matchRandom(args["base_pop"],args["num_inds"],args["ids"],args["out_dir"],args["threshold"])
     end
     if args["matched"]
-        matchMissing(args["base_pop"],args["ids"],args["out_dir"],args["matches"])
+        matchMissing(args["base_pop"],args["ids"],args["out_dir"],args["matches"],args["prefix"])
     end
 end
 
