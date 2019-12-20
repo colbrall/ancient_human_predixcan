@@ -15,6 +15,8 @@ import sys
 import string
 import gzip
 
+ALLELES = ["A","C","G","T"]
+
 def thousGens(path):
     comment_char = "##"
     delim = "\t"
@@ -59,13 +61,18 @@ def update_vcf(path): #prufer 2017 VCFs
             a2 = l[4]
             maf = "."
             ac = []
+            try:
+                a1 = ALLELES[int(a1)-1]
+                a2 = ALLELES[int(a2)-1]
+            except:
+                continue
             types = [str.split(x,":")[0] for x in l[9:]]
             for gt in types:
                 if gt == "0/0":
                     ac.append("0")
                 elif gt == "0/1" or gt == "1/0":
                     ac.append("1")
-                elif gt == "1/1"
+                elif gt == "1/1":
                     ac.append("2")
                 else:
                     ac.append("NA")
