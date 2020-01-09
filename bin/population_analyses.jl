@@ -1,6 +1,6 @@
 # comp_pop.jl
 # @author Laura Colbran
-# functions to compare PrediXcan results in archaics to Eric's bioVU results or 1kG
+# functions to make large-scale, population-wide comparisons
 #
 # contains functions for comparing sets of expression predictions
 #
@@ -56,6 +56,13 @@ function parse_commandline()
         "--genes"
             help = "to compute similarities between genes"
             action = :store_true
+        "--out"
+            help = "to save gene ids passing thresh"
+            action = :store_true
+        "--thresh","-t"
+            help = "correlation above which we'll keep genes"
+            arg_type = Float64
+            default = 0.5
     end
     return parse_args(s)
 end
@@ -237,7 +244,7 @@ function indSim(base_pop::String,pop_dir::Array{String,1})
 end
 
 #correlation across genes by threshold distribution
-function geneSim(base_pop::String,pop_dir::Array{String,1})
+function geneSim(base_pop::String,pop_dir::Array{String,1},o::Bool,thresh::Float64)
     map_dict = mapNames()::Dict{String,String}
     out = DataFrame(gene=String[],r=Float64[],tissue=String[])
     for tiss in keys(map_dict)
@@ -256,12 +263,14 @@ function geneSim(base_pop::String,pop_dir::Array{String,1})
                     if length(pop[pop[:,1] .== base[i,1],id]) == 0 break end
                     tmp = vcat(tmp,DataFrame(full=[base[i,Symbol(base_id)]],sim=pop[pop[:,1] .== base[i,1],id]))
                 end
-                #println(first(tmp,6))
                 if nrow(tmp) == 0 continue end
                 out = vcat(out,DataFrame(gene=base[i,:gene_id],r=cor(tmp[:full],tmp[:sim]),tissue=tiss))
             end
         end
         #maybe add plot by tiss?
+    end
+    if o
+        CSV.write(out[(out[:r] .> thresh),:], "filtered_genes_$thesh.txt";delim='\t')
     end
     dist_plot = histogram(out[:r],xlabel="r",ylabel="Num. Models",bins=100,margin=10Plots.mm)
     Plots.savefig(dist_plot,"all_gene_r.pdf")
@@ -277,7 +286,7 @@ function main()
         indSim(parsed_args["base_pop"],parsed_args["pop_dir"])
     end
     if parsed_args["genes"]
-        geneSim(parsed_args["base_pop"],parsed_args["pop_dir"])
+        geneSim(parsed_args["base_pop"],parsed_args["pop_dir"],parsed_args["out"],parsed_args["thresh"])
     end
 end
 
