@@ -10,7 +10,10 @@ const ID_MAP = Dict{String,String}("A0A384N679"=> "CPE","IHPK1"=>"IP6K1","A0A140
                     "ZNF278"=>"PATZ1","HEL-S-2a"=>"PRDX2","CREA7-4"=>"NKX2-4","ARHH"=>"RHOH","AMICA1"=>"JAML","EBI2"=>"GPR183","MNAB"=>"RC3H2",
                     "ATL1-alpha"=>"BCL11B","H0Y858"=>"AC097637.1","STING"=>"TMEM173","ILRUN"=>"C6orf106","LGP2"=>"DHX58","CGAS"=>"MB21D1","MITA"=>"TMEM173",
                     "HEL-S-19"=>"GALK1","NUP42"=>"NUPL2","PRXL2C"=>"AAED1","HEL-S-87p"=>"ALDOA","HEL-S-49"=>"TPI1","HEL-S-278"=>"GAPDHS","HEL-S-162eP"=>"GAPDH",
-                    "PKM2"=>"PKM","A0A140VJR3"=>"PGK2","HEL-S-30"=>"PKM")
+                    "PKM2"=>"PKM","A0A140VJR3"=>"PGK2","HEL-S-30"=>"PKM","E9KL44"=> "HADHA","FLJ20701"=>"PID1","MEAK7"=>"TLDC1","HEL-S-22"=>"GSTP1",
+                    "Pe1Fe3"=>"FER","SFRS5"=>"SRSF5","IRS-1"=>"IRS1","NR1C1"=>"PPARA","A0A140VJM6"=>"KHK","A0A384P5Q0"=>"CAT","GDF8"=>"MSTN",
+                    "LOC110117498-PIK3R3"=>"AL358075.4","A0A384MEK5"=>"ICAM1","TRARG1"=>"TUSC5","A0A384MDY5"=>"FABP3","M0QYV0"=>"AC006486.1","A0A024R3Z7"=>"CFLAR",
+                    "irs-2"=>"IRS2","AgRP"=>"AGRP","HEL-S-42"=>"RHOQ")
 
 function parse_commandline()
     s = ArgParseSettings()
