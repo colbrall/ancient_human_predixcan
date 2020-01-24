@@ -112,31 +112,6 @@ function sampleSummary()
     anno[anno[:lifestyle] .== "Agriculture",:lifestyle] = "Agri."
     anno[anno[:lifestyle] .== "Hunter-gatherer",:lifestyle] = "HG"
 
-    # # for ones with >700k SNPs called
-    # anno = anno[anno[:num_snps].>700000,:]
-    # println("with >700k:")
-    # describe(anno[:num_snps])
-    # describe(anno[:date])
-    # f, axes = Seaborn.subplots(2, 3, figsize=(10,7), sharey="all")
-    # x = y = 2
-    # plot_num = 1
-    # for loc in unique(anno[:continent])
-    #     println("\n$loc")
-    #     for life in unique(anno[:lifestyle])
-    #         println("Num $life: $(count(i->(i==life),anno[anno[:continent].==loc,:lifestyle]))")
-    #     end
-    #     describe(anno[anno[:continent].==loc,:date])
-    #     life_plot = swarmplot(anno[anno[:continent] .== loc,:lifestyle],anno[anno[:continent] .== loc,:date],
-    #                         order=["HG","Past.","Agri.","NA"],ax=axes[x, y])
-    #     life_plot.set_title("$(loc) (N = $(nrow(anno[anno[:continent] .== loc,:])))")
-    #     life_plot.set_ylabel("Age (Years BP)")
-    #     plot_num += 1
-    #     x = plot_num%2 + 1
-    #     y = plot_num%3 + 1
-    # end
-    # Seaborn.savefig("lifestyle_age_by_continent_700k.pdf")
-    # clf()
-
     # for ones with >777677 SNPs called (3rd quartile)
     anno = anno[anno[:num_snps].>777677,:]
     println("with >777677:")
@@ -162,32 +137,8 @@ function sampleSummary()
     end
     Seaborn.savefig("lifestyle_age_by_continent_3rdq.pdf")
     clf()
-    CSV.write("reich_individuals_3rdq.txt",anno[[:ind_id,:master_id,:paper,:date,:group_id,:country,:sex,:coverage,:num_snps,:continent,:colbran_id,:type,:location,:population,:lifestyle]];delim='\t')
+    CSV.write("reich_individuals_3rdq.txt",anno[[:ind_id,:master_id,:paper,:date,:group_id,:country,:sex,:coverage,:num_snps,:continent,:colbran_id,:type,:location,:population,:lifestyle,:latitude,:longitude]];delim='\t')
 
-    # # for ones with >800k SNPs called
-    # anno = anno[anno[:num_snps].>800000,:]
-    # println("with >800k:")
-    # describe(anno[:num_snps])
-    # describe(anno[:date])
-    # f, axes = Seaborn.subplots(2, 3, figsize=(10,7), sharey="all")
-    # x = y = 2
-    # plot_num = 1
-    # for loc in unique(anno[:continent])
-    #     println("\n$loc")
-    #     for life in unique(anno[:lifestyle])
-    #         println("Num $life: $(count(i->(i==life),anno[anno[:continent].==loc,:lifestyle]))")
-    #     end
-    #     describe(anno[anno[:continent].==loc,:date])
-    #     life_plot = swarmplot(anno[anno[:continent] .== loc,:lifestyle],anno[anno[:continent] .== loc,:date],
-    #                         order=["HG","Past.","Agri.","NA"],ax=axes[x, y])
-    #     life_plot.set_title("$(loc) (N = $(nrow(anno[anno[:continent] .== loc,:])))")
-    #     life_plot.set_ylabel("Age (Years BP)")
-    #     plot_num += 1
-    #     x = plot_num%2 + 1
-    #     y = plot_num%3 + 1
-    # end
-    # Seaborn.savefig("lifestyle_age_by_continent_800k.pdf")
-    # clf()
 end
 
 sampleSummary()
