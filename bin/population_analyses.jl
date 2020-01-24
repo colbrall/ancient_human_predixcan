@@ -60,9 +60,10 @@ function parse_commandline()
             help = "to save gene ids passing thresh"
             action = :store_true
         "--thresh","-t"
-            help = "correlation above which we'll keep genes"
+            nargs = '*'
+            help = "correlation(s) above which we'll keep genes. write output file per thresh"
             arg_type = Float64
-            default = 0.5
+            default = [0.5]
     end
     return parse_args(s)
 end
@@ -244,7 +245,7 @@ function indSim(base_pop::String,pop_dir::Array{String,1})
 end
 
 #correlation across genes by threshold distribution
-function geneSim(base_pop::String,pop_dir::Array{String,1},o::Bool,thresh::Float64)
+function geneSim(base_pop::String,pop_dir::Array{String,1},o::Bool,thresh::Array{Float64,1})
     map_dict = mapNames()::Dict{String,String}
     out = DataFrame(gene=String[],r=Float64[],tissue=String[])
     for tiss in keys(map_dict)
@@ -264,13 +265,15 @@ function geneSim(base_pop::String,pop_dir::Array{String,1},o::Bool,thresh::Float
                     tmp = vcat(tmp,DataFrame(full=[base[i,Symbol(base_id)]],sim=pop[pop[:,1] .== base[i,1],id]))
                 end
                 if nrow(tmp) == 0 continue end
-                out = vcat(out,DataFrame(gene=base[i,:gene_id],r=cor(tmp[:full],tmp[:sim]),tissue=tiss))
+                out = vcat(out,DataFrame(gene=base[i,:gene_id],r=cor(tmp[:full],tmp[:sim]),tissue="$(map_dict[tiss])"))
             end
         end
         #maybe add plot by tiss?
     end
     if o
-        CSV.write(out[(out[:r] .> thresh),:], "filtered_genes_$thesh.txt";delim='\t')
+        for t in thresh
+            CSV.write("filtered_genes_$t.txt",out[(out[:r] .> t),:];delim='\t')
+        end
     end
     dist_plot = histogram(out[:r],xlabel="r",ylabel="Num. Models",bins=100,margin=10Plots.mm)
     Plots.savefig(dist_plot,"all_gene_r.pdf")
