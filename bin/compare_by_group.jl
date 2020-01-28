@@ -48,7 +48,7 @@ function parseCommandLine()
         "--out_dir", "-o"
             help = "directory path to write output files"
             arg_type = String
-            default = "."
+            default = "./"
 
         "--targets","-t"
             help = "bed file with specific genes to check. if empty, does all genes."
@@ -117,7 +117,6 @@ end
 
 function sampDF(s_path::String,col::Int64)
     df = CSV.read(s_path; delim='\t',allowmissing=:none)
-    println(first(df,6))
     return df[:,[1,col]]
 end
 
@@ -200,7 +199,11 @@ function corrVar(pop_path::String,samp_path::String,col::Int64,correct::String,o
         println("genes passing $correct correction: $(nrow(gene_res[gene_res[:,ncol(gene_res)] .== true,:]))/$(nrow(gene_res))")
         println("threshold = $thresh\n")
     end
-    CSV.write("$(realpath(out_path))pvalues_$(names(var)[2])_corr.txt",gene_res;delim='\t')
+    if isfile("$(realpath(out_path))/pvalues_$(join(group_names,"_")).txt")
+        CSV.write("$(realpath(out_path))/pvalues_$(join(group_names,"_")).txt",gene_res;delim='\t',append=true)
+    else
+        CSV.write("$(realpath(out_path))/pvalues_$(join(group_names,"_")).txt",gene_res;delim='\t')
+    end
 end
 
 function grpComp(pop_path::String,samp_path::String,group_names::Array{String,1},col::Int64,correct::String,out_path::String,targ_file)
@@ -256,11 +259,15 @@ function grpComp(pop_path::String,samp_path::String,group_names::Array{String,1}
         end
         println("genes passing $correct correction: $(nrow(gene_res[gene_res[:,ncol(gene_res)] .== true,:]))/$(nrow(gene_res))")
         println("threshold = $thresh\n")
-        CSV.write("$(realpath(out_path))/pvalues_$(join(group_names,"_")).txt",gene_res;delim='\t',append=true)
+        if isfile("$(realpath(out_path))/pvalues_$(join(group_names,"_")).txt")
+            CSV.write("$(realpath(out_path))/pvalues_$(join(group_names,"_")).txt",gene_res;delim='\t',append=true)
+        else
+            CSV.write("$(realpath(out_path))/pvalues_$(join(group_names,"_")).txt",gene_res;delim='\t')
+        end
     end
 end
 
-function plotGene(pop_path::String,samp_path::String,group_names::Array{String,1},col::Int64,out_path::String,gene_ids::Array{String,1})
+function plotSwarm(pop_path::String,samp_path::String,group_names::Array{String,1},col::Int64,out_path::String,gene_ids::Array{String,1})
     groups = sampDict(samp_path,group_names,col)
     gene_res = DataFrames.DataFrame()
     if isfile(pop_path)
@@ -290,15 +297,40 @@ function plotGene(pop_path::String,samp_path::String,group_names::Array{String,1
             end
         end
     else
-        println("not implemented yet")
+        println("not implemented yet-- please specify tissue")
+        #plot all tiss
+    end
+end
+
+function plotTrend(pop_path::String,samp_path::String,col::Int64,out_path::String,gene_ids::Array{String,1})
+    var = sampDF(samp_path,col)
+    if isfile(pop_path)
+        indices = Dict{SubString,Array{Int64,1}}()
+        GZip.open("$(pop_path)") do f
+            for line in eachline(f)
+                l = split(chomp(line),'\t')
+                if startswith(line,"gene")
+                    indices = [findfirst(x->x==i,l) for i in var[:,1]]
+                    continue
+                end
+                if !in(l[1], gene_ids) continue end
+                var[Symbol(l[1])] = parse.(Float64,l[indices])
+                s_plot = Plots.scatter(var[:,2],var[Symbol(l[1])],xlabel="$(names(var)[2])",ylabel="Pred. Expr.",title ="$(l[1])",margin=10Plots.mm)
+                Plots.savefig(s_plot,"$(l[1])_$(names(var)[2]).pdf")
+            end
+        end
+    else
+        println("not implemented yet-- please specify tissue")
         #plot all tiss
     end
 end
 
 function main()
     parsed_args = parseCommandLine()
-    if parsed_args["plot"]
-        plotGene(parsed_args["pop_dir"],parsed_args["sample_list"],parsed_args["groups"],parsed_args["column"],(parsed_args["out_dir"]),parsed_args["genes"])
+    if parsed_args["plot"] && length(parsed_args["groups"]) != 0
+        plotSwarm(parsed_args["pop_dir"],parsed_args["sample_list"],parsed_args["groups"],parsed_args["column"],(parsed_args["out_dir"]),parsed_args["genes"])
+    elseif parsed_args["plot"] && length(parsed_args["groups"]) == 0
+        plotTrend(parsed_args["pop_dir"],parsed_args["sample_list"],parsed_args["column"],(parsed_args["out_dir"]),parsed_args["genes"])
     elseif length(parsed_args["groups"]) == 0
         corrVar(parsed_args["pop_dir"],parsed_args["sample_list"],parsed_args["column"],parsed_args["multi_correct"],(parsed_args["out_dir"]),parsed_args["targets"])
     else #if 1, compares that group to everyone else
