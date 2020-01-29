@@ -31,6 +31,9 @@ function parse_commandline()
             nargs=1
             help = "paths to the reference database"
             arg_type = String
+        "--targets","-t"
+            help = "models to include, if you want to not include all"
+            arg_type = String
         "--box"
             help = "to make boxplots of performance metrics"
             action = :store_true
@@ -43,8 +46,16 @@ function parse_commandline()
         "--missingness"
             help = "to do analyses on missing SNPs by model"
             action = :store_true
+        "--summarize"
+            help="summarize genes across tissues"
+            action=:store_true
     end
     return parse_args(s)
+end
+
+function readGenes(gene_file::String,tiss::SubString{String}) #return array of gene IDs to keep in tissue
+    genes = CSV.read(gene_file;delim="\t")
+    return genes[genes[:tissue] .== tiss,:gene]
 end
 
 # for each SNP, count the number of people missing it, and for each individual,
@@ -233,6 +244,45 @@ function boxplots(ref_file::Array{String,1},db_files::Array{String,1})
     Plots.savefig(nsnps_plot,"boxes_nsnps.pdf")
 end
 
+#compares R2 and Number of SNPs in models from both sets
+function modelSumm(db_files::Array{String,1},gene_file)
+    q = "SELECT * FROM 'extra'"
+    tiss_data = DataFrames.DataFrame(tissue=String[],num_models=Int64[])
+    genes = Dict{String,Int64}()
+    for file in db_files
+        tiss = split(splitpath(file)[end],"_1kG_alpha0.5")[1]
+        if occursin("_BA",tiss) tiss = split(tiss,"_BA")[1] end #to catch ACC  and frontal cortex
+        models = DataFrame(SQLite.Query(SQLite.DB(file),q))
+        if typeof(gene_file) != Nothing
+            targets = readGenes(gene_file,tiss)
+            models = models[[in(i,targets) for i in models[:gene]],:]
+        end
+        push!(tiss_data,[tiss,nrow(models)])
+        for gene in models[:gene]
+            if in(gene,keys(genes))
+                genes[gene] += 1
+            else
+                genes[gene] = 1
+            end
+        end
+    end
+    sort!(tiss_data,:num_models)
+    tiss_plot = bar(tiss_data[:tissue],tiss_data[:num_models],xlabel="",ylabel="# Genes",margin=10Plots.mm, xtickfontcolor=:white)
+    Plots.savefig(tiss_plot,"tissue_numModels.pdf")
+    describe(tiss_data[:num_models])
+    for t in tiss_data[:tissue]
+        println(t)
+    end
+
+    gene_data = DataFrames.DataFrame(gene=String[],num_tiss=Int64[])
+    for g in keys(genes)
+        push!(gene_data,[g,genes[g]])
+    end
+    gene_plot = histogram(gene_data[:num_tiss],xlabel="# Tissues",ylabel="# Genes",margin=10Plots.mm,bins= 50)
+    Plots.savefig(gene_plot,"gene_numTissues.pdf")
+    describe(gene_data[:num_tiss])
+end
+
 function main()
     parsed_args = parse_commandline()
     if parsed_args["performance"]
@@ -243,6 +293,9 @@ function main()
     end
     if parsed_args["box"]
         boxplots(parsed_args["reference"],parsed_args["databases"])
+    end
+    if parsed_args["summarize"]
+        modelSumm(parsed_args["databases"],parsed_args["targets"])
     end
 end
 
