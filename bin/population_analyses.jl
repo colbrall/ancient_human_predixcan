@@ -151,7 +151,8 @@ function mapNames()
     "Skin_Not_Sun_Exposed_Suprapubic" => "Skin_Not_Sun_Exposed_Suprapubic",
     "Skin_Sun_Exposed_Lower_leg" => "Skin_Sun_Exposed_Lower_leg",
     "Small_Intestine_Terminal_Ileum" => "Small_Intestine_Terminal_Ileum",
-    "Whole_Blood" => "Whole_Blood")
+    "Whole_Blood" => "Whole_Blood","Prostate"=>"Prostate","Testis"=>"Testis","Thyroid"=> "Thyroid",
+    "Uterus"=>"Uterus","Vagina"=>"Vagina")
 end
 
 # assembles distance matrix
