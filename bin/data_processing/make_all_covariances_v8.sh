@@ -10,4 +10,3 @@ for covfile in $(ls ../../data/gtex_v8_data/model_by_chr/${tissue}_chr*_${snpset
 	cat $covfile >> $allCovariances
 done
 gzip $allCovariances
-

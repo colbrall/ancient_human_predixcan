@@ -29,7 +29,8 @@ function parse_commandline()
 end
 
 function readInds(ind_file::String) #return array of ind IDs as symbols
-    inds = Array(Symbol,1)[]
+    inds = Array{Symbol,1}()
+    append!(inds,[:gene])
     open(ind_file) do f
         for l in eachline(f)
             append!(inds,[Symbol(split(chomp(l),"\t")[1])])
@@ -49,12 +50,12 @@ function filterPreds(pop_dir::String,ind_file,gene_file,out_dir::String)
         tiss = split(file,"_elasticNet0")[1]
         println(tiss)
         tmp = CSV.read(GZip.open("$pop_dir$file");delim='\t',allowmissing=:none)
-        if typeof(ind_file) != Nothing
-            tmp = tmp[:,readInds(ind_file)]
-        end
         if typeof(gene_file) != Nothing
             targets = readGenes(gene_file,tiss)
             tmp = tmp[[in(i,targets) for i in tmp[:gene]],:]
+        end
+        if typeof(ind_file) != Nothing
+            tmp = tmp[:,readInds(ind_file)]
         end
         outf = "$(out_dir)$(splitext(file)[1])"
         CSV.write(outf,tmp;delim="\t")

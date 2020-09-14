@@ -16,6 +16,7 @@ using StatsBase
 using Statistics
 using StatsPlots
 using Plots
+using HypothesisTests
 
 default(color=:blue,leg=false,grid=false,fontfamily="arial",alpha=0.5)
 #using PyPlot
@@ -64,6 +65,16 @@ function parse_commandline()
             help = "correlation(s) above which we'll keep genes. write output file per thresh"
             arg_type = Float64
             default = [0.5]
+        "--match_corr"
+            action=:store_true
+            help = "if you plan on correlating a metric with agreement"
+
+        "--anno","-a"
+            arg_type=String
+            help="file with individual id and metric you want to correlate to (e.g. output of calc_miss_prop.jl)"
+        "--id_map","-m"
+            arg_type=String
+            help = "sample.txt file with the original ancient ids in the right order for the matched samples."
     end
     return parse_args(s)
 end
@@ -238,10 +249,14 @@ function indSim(base_pop::String,pop_dir::Array{String,1})
             end
         end
     end
-    comp_plot = boxplot(corr_df[:comp_pop], corr_df[:rho],notch = true, ylabel="Rho",xlabel= "Comparison Populations",margin=10Plots.mm)
+    comp_plot = boxplot(corr_df[:comp_pop], corr_df[:rho],notch = true, ylabel="Rho",xlabel= "Comparison Populations",margin=10Plots.mm,ylims=[0,1])
     #tight_layout()
     Plots.savefig(comp_plot, "pop_corrspearman_box.pdf")
-    comp_plot = boxplot(corr_df[:comp_pop], corr_df[:r],notch = true, ylabel="Pearson r",xlabel= "Comparison Populations",margin=10Plots.mm)
+    for p in unique(corr_df[:comp_pop])
+        println("$p:")
+        describe(corr_df[corr_df[:comp_pop] .== p,:rho])
+    end
+    comp_plot = boxplot(corr_df[:comp_pop], corr_df[:r],notch = true, ylabel="Pearson r",xlabel= "Comparison Populations",margin=10Plots.mm)#,ylims=[0,1])
     Plots.savefig(comp_plot, "pop_corrpearson_box.pdf")
 end
 
@@ -280,6 +295,42 @@ function geneSim(base_pop::String,pop_dir::Array{String,1},o::Bool,thresh::Array
     Plots.savefig(dist_plot,"all_gene_r.pdf")
 end
 
+function matchCorr(base_pop::String,pop_dir::Array{String,1},miss_prop::String,id_map::String)
+    map_dict = mapNames()::Dict{String,String}
+    corr_df = DataFrame(comp_pop = String[], base_ind = String[], sim_ind = String[], orig_id = String[],tiss = String[], rho = Float64[],r = Float64[])
+    map = CSV.read(id_map;delim='\t',header=[:ind,:fam],allowmissing=:none)[:ind]
+    for tiss in keys(map_dict)
+        base = readGeneDF("$(realpath(base_pop))/$(map_dict[tiss])_elasticNet0_0.5.full.gz")
+        if base == "NA" continue end
+        for pop_file in pop_dir
+            pop = readGeneDF("$(realpath(pop_file))/$(map_dict[tiss])_elasticNet0_0.5.full.gz")
+            if pop == "NA"
+                continue
+            end
+            println("$pop_file, $tiss")
+            temp_base = sort!(join(base,pop,on=:gene_id,kind=:semi),cols=[:gene_id])
+            temp_pop = sort!(join(pop,base,on=:gene_id,kind=:semi),cols=[:gene_id])
+            i=1
+            for id in names(pop)[2:end]
+                base_id = split(String(id),"_")[1]
+                push!(corr_df,[split(dirname(pop_file),"/")[end],base_id,String(id),map[i],tiss,corspearman(temp_pop[id],temp_base[Symbol(base_id)]),cor(temp_pop[id],temp_base[Symbol(base_id)])])
+                i+=1
+            end
+        end
+    end
+    println(first(corr_df,3))
+    corr_df = join(corr_df,CSV.read(miss_prop;delim='\t',allowmissing=:none),on=:orig_id=>:ind_id)
+    corr_df[:all] = "All"
+    rho = corspearman(corr_df[:prop_miss],corr_df[:rho])
+    println("Spearman rho : $rho; $(OneSampleZTest(atanh(rho), 1, nrow(corr_df)))")
+    println("\nCorr summary:")
+    describe(corr_df[:rho])
+    @df corr_df boxplot(:all,:rho,notch = true,xlabel="",ylabel = "Rho")
+    StatsPlots.savefig("reich_sim_rho_dist_all.pdf")
+    @df corr_df boxplot(:tiss,:rho,notch = true,xlabel="Tissue",ylabel = "Rho")
+    StatsPlots.savefig("reich_sim_rho_dist_tiss.pdf")
+end
+
 function main()
     parsed_args = parse_commandline()
 #### Clustering
@@ -291,6 +342,9 @@ function main()
     end
     if parsed_args["genes"]
         geneSim(parsed_args["base_pop"],parsed_args["pop_dir"],parsed_args["out"],parsed_args["thresh"])
+    end
+    if parsed_args["match_corr"]
+        matchCorr(parsed_args["base_pop"],parsed_args["pop_dir"],parsed_args["anno"],parsed_args["id_map"])
     end
 end
 

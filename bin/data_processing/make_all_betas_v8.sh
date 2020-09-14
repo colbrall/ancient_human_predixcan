@@ -13,4 +13,3 @@ for betafile in $(ls ../../data/gtex_v8_data/model_by_chr/TW_${tissue}_elasticNe
 	fi
 	tail -n +2 $betafile >> $allBetas
 done
-

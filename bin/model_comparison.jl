@@ -35,7 +35,7 @@ function parse_commandline()
             help = "models to include, if you want to not include all"
             arg_type = String
         "--box"
-            help = "to make boxplots of performance metrics"
+            help = "to make plots of performance metrics"
             action = :store_true
         # "--snps"
         #     help = "to compare specific SNPs and their weights"
@@ -236,12 +236,23 @@ function boxplots(ref_file::Array{String,1},db_files::Array{String,1})
         models = join(ref_models,models, on=:gene,kind=:inner,makeunique=true)
         append!(r2_boxes,DataFrames.DataFrame(R2 = models[Symbol("pred.perf.R2")], set = repeat(["$(i)_shared_$(nrow(models))"],nrow(models)),cat= repeat(["shared"],nrow(models))))
         append!(nsnps_boxes,DataFrames.DataFrame(nsnps = models[Symbol("n.snps.in.model")], set = repeat(["$(i)_shared_$(nrow(models))"],nrow(models)),cat= repeat(["shared"],nrow(models))))
+        # scatter plot R2 ref vs. R2 file
+        s_plot = scatter(models[Symbol("pred.perf.R2")],models[Symbol("pred.perf.R2_1")],xlabel="ref_models R2",ylabel="$(i)_comp R2",margin=10Plots.mm)
+        Plots.savefig(s_plot,"scatter_$(i)_comp.pdf")
         i+=1
     end
     r2_plot = boxplot(r2_boxes[:set], r2_boxes[:R2],notch = true, ylabel="R2",xlabel= "Training Set",margin=10Plots.mm,outliers=false)
     Plots.savefig(r2_plot,"boxes_r2.pdf")
     nsnps_plot = boxplot(nsnps_boxes[:set], nsnps_boxes[:nsnps],notch = true, ylabel="N_SNPs",xlabel= "Training Set",margin=10Plots.mm,outliers=false)
     Plots.savefig(nsnps_plot,"boxes_nsnps.pdf")
+    for lab in unique(r2_boxes[:set])
+        println("$lab R2:")
+        describe(r2_boxes[r2_boxes[:set].==lab,:R2])
+    end
+    for lab in unique(nsnps_boxes[:set])
+        println("$lab num_snps:")
+        describe(nsnps_boxes[nsnps_boxes[:set].==lab,:nsnps])
+    end
 end
 
 #compares R2 and Number of SNPs in models from both sets

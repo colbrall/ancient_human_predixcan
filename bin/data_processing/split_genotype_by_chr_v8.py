@@ -42,9 +42,16 @@ def split_genotype(geno_file, out_prefix):
                         f.write('\t'.join(header) + "\n")
                     continue
             in_line = l.split()
+            flipped = False
             chr = in_line[0]
+            id = in_line[2].split("_")
             refAllele = in_line[3]
             effectAllele = in_line[4]
+            # make sure ref/eff matches 1kG
+            if refAllele != id[2]:
+                refAllele = id[2]
+                effectAllele = id[3]
+                flipped = True
             # Skip non_single letter polymorphisms
             #if len(refAllele) > 1 or len(effectAllele) > 1:
             #    continue
@@ -65,9 +72,13 @@ def split_genotype(geno_file, out_prefix):
             # convert genotype to dosage
             for ind in range(9,len(in_line)):
                genotype = in_line[ind].split(':')[0]
-               if genotype == "0/0": out_line += [0]
+               if genotype == "0/0": 
+                   if flipped: out_line += [2]
+		   else: out_line += [0]
                elif genotype == "0/1" or genotype == "1/0": out_line += [1]
-               elif genotype == "1/1": out_line += [2]
+               elif genotype == "1/1": 
+                   if flipped: out_line += [0]
+                   else: out_line += [2]
                else:
                    out_line += [-1] #if a genotype call wasn't made for that person
             # mean level imputation

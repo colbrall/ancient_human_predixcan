@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 # updated to run on Slurm with Python 3 by Laura Colbran 12/2018
+# ** make sure the version of R you're running is earlier than 3.6-- struggles with readRDS later in pipeline if it's 3.6
 
 import subprocess
 import sys
 
-# from model_parameters_v8_all import *
+#from model_parameters_v8_all import *
 # from model_parameters_1240k import *
-from model_parameters_top800k import *
+# from model_parameters_top500k import *
+from model_parameters_v8_1kGvariants import *
 
 # Process gene annotation----------------------------------------------/WORKING
 # print("Parsing gene annotation...")
@@ -24,22 +26,22 @@ from model_parameters_top800k import *
 # Process snp annotation-----------------------------------------------/WORKING
 print("Splitting SNP annotation file up by chromosome...")
 subprocess.call(
-   ['../data_processing/split_snp_annot_by_chr_v8.py',
-   SNP_ANN_DIR + SNP_ANNOTATION_FN,
-   INTER_DIR + SNP_ANN_INTER_DIR + SNP_ANN_INTER_PREFIX1
-   ])
+  ['../data_processing/split_snp_annot_by_chr_v8.py',
+  SNP_ANN_DIR + SNP_ANNOTATION_FN,
+  INTER_DIR + SNP_ANN_INTER_DIR + SNP_ANN_INTER_PREFIX1
+  ])
 print("Saving each snp annotation file as RDS object")
 subprocess.call(
-   ['Rscript', '../data_processing/snp_annot_to_RDS.R',
-   INTER_DIR + SNP_ANN_INTER_DIR + SNP_ANN_INTER_PREFIX2])
+  ['Rscript', '../data_processing/snp_annot_to_RDS.R',
+  INTER_DIR + SNP_ANN_INTER_DIR + SNP_ANN_INTER_PREFIX2])
 
 # Process genotype files-----------------------------------------------/
 # print("Splitting genotype files up by chromosome...")
 # for i in range(len(GENOTYPE_FNS)):
-# subprocess.call(
-#     ['../data_processing/split_genotype_by_chr_v8.py',
-#     GENOTYPE_INPUT_DIR + GENOTYPE_FNS[i],
-#     INTER_DIR + GENOTYPE_INTER_DIR + GENOTYPE_INTER_PREFIX[i]])
+#     subprocess.call(
+#         ['../data_processing/split_genotype_by_chr_v8.py',
+#         GENOTYPE_INPUT_DIR + GENOTYPE_FNS[i],
+#         INTER_DIR + GENOTYPE_INTER_DIR + GENOTYPE_INTER_PREFIX[i]])
 
 # Process expression files---------------------------------------------/WORKING
 # print("Transposing expression data and saving as RDS object...")

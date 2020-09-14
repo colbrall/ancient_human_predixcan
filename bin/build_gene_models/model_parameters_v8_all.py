@@ -15,7 +15,7 @@ STUDY_NAMES = ['Adipose_Subcutaneous','Adipose_Visceral_Omentum','Adrenal_Gland'
         'Small_Intestine_Terminal_Ileum','Spleen','Stomach','Testis','Thyroid','Uterus','Vagina','Whole_Blood']
 # File names for gene and snp annotation:
 GENE_ANNOTATION_FN = 'gencode.v27.annotation.gtf.gz'
-SNP_ANNOTATION_FN = 'gtex_v8_vcfSNPs_hg38.txt.gz'
+SNP_ANNOTATION_FN = 'gtex_v8_vcfSNPs_hg38_refFix.txt.gz'
 # List of genotype file names:
 GENOTYPE_FNS = ['gtex_v8.vcf.gz']
 
@@ -40,11 +40,11 @@ GENOTYPE_INTER_PREFIX = map(lambda x: x[:-7], GENOTYPE_FNS)
 
 # Define directories---------------------------------------------------/
 INPUT_DIR = '/dors/capra_lab/data/genotype-tissue_expression_project/v8/'
-INTER_DIR = '../../data/gtex_v8_data/'
-OUTPUT_DIR = '../../data/v8_models/full_v8_models/'
+INTER_DIR = '/scratch/colbrall/gtex_v8_data/'
+OUTPUT_DIR = '/scratch/colbrall/v8_models_refFix/'
 GENE_ANN_DIR = '/dors/capra_lab/projects/ancient_human_predixcan/data/gtex_v8_data/'
-SNP_ANN_DIR = '/dors/capra_lab/projects/ancient_human_predixcan/data/snp_lists/'
-SNP_ANN_INTER_DIR = 'snp_anno_gtexv8All/'
+SNP_ANN_DIR = '/scratch/colbrall/'
+SNP_ANN_INTER_DIR = 'snp_anno_gtexv8All_RefFix/'
 GENOTYPE_INPUT_DIR = '/dors/capra_lab/data/genotype-tissue_expression_project/v8/genotypes_unpruned/'
 EXPRESSION_INPUT_DIR = '/dors/capra_lab/data/genotype-tissue_expression_project/v8/expression/residual/'
 GENOTYPE_INTER_DIR = 'genotypes/'

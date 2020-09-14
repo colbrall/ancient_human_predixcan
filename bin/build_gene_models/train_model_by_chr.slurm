@@ -5,7 +5,7 @@
 #SBATCH --time=24:00:00
 #SBATCH --mem=22G
 #SBATCH --array=1-22%4
-#SBATCH --output=%x_%A_%a.out
+#SBATCH --output=../../out/%x_%A_%a.out
 
 #################
 # Job Execution #

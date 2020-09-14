@@ -65,7 +65,7 @@ function parse_commandline()
             arg_type = String
 
         "--ind_file","-i"
-            help = "fam file corresponding to the individuals in your dosage file. order matters."
+            help = "sample file corresponding to the individuals in your dosage file. order matters."
             arg_type = String
 
         "--snp_summary"
@@ -107,18 +107,19 @@ end
 # parses Reich Lab sample annotation file
 function parseAnnoFile(anno_file::String)
     inds = CSV.read(anno_file; delim='\t',allowmissing=:none)
-    inds = inds[[1,2,7,8,9,11,13,16,20,21,24],]
-    names!(inds,[:ind_id,:master_id,:type,:paper,:date,:group_id,:country,:sex,:coverage,:num_snps,:assessment])
-    inds = inds[inds[:date] .!= "0",:] #remove present-day samples
+    inds = inds[[2,3,4,9,13,18,19,33],]
+#    inds = inds[[1,2,3,7,8,9],]
+    names!(inds,[:ind_id,:master_id,:skeleton_id,:date,:country,:coverage,:num_snps,:assessment])
+#    inds = inds[inds[:date] .!= "0",:]
+    inds = inds[inds[:date] .!= 0,:] #remove present-day samples
     inds[:continent] = ".."
-    inds[:ind_date] = 0
     inds[:flt_cov] = 0.0
     for i in 1:nrow(inds)
-        if inds[i,:date] == ".."
-            inds[i,:ind_date] = -1
-        else
-            inds[i,:ind_date] = parse(Int,inds[i,:date])
-        end
+        # if inds[i,:date] == ".."
+        #     inds[i,:ind_date] = -1
+        # else
+        #     inds[i,:ind_date] = parse(Int,inds[i,:date])
+        # end
 
         if inds[i,:coverage] == ".."
             inds[i,:flt_cov] = -1.0
@@ -138,6 +139,9 @@ function parseAnnoFile(anno_file::String)
             inds[i,:continent] = "Africa"
         elseif inds[i,:country] in OCEANIA
             inds[i,:continent] = "Oceania"
+        elseif inds[i,:country] == ".." #for 2 raghavan 2014 science samples.
+            inds[i,:country] = "Canada"
+            inds[i,:continent] = "N_America"
         end
 
         if inds[i,:ind_id] in EXCLUDE
@@ -152,9 +156,10 @@ function parseAnnoFile(anno_file::String)
             inds[i,:assessment] = "maybe"
         end
     end
-    inds[:date] = inds[:ind_date]
+    # inds[:date] = inds[:ind_date]
     inds[:coverage] = inds[:flt_cov]
-    deletecols!(inds,[:ind_date,:flt_cov])
+    # deletecols!(inds,[:ind_date,:flt_cov])
+    deletecols!(inds,[:flt_cov])
     inds = inds[inds[:continent] .!== "NON-HUMAN",:] #remove archaic hominins, reference genomes
     return inds
 end
@@ -259,16 +264,16 @@ function snpCoverage(geno_dir::String,anno_file::String,ind_file::String)
     snps = DataFrames.DataFrame(chr = String[],pos = Int64[],rsid = String[],
                                         coverage_rate = Int64[],gt_count = Int64[])
     samples = parseAnnoFile(anno_file)
-    samples = join(deletecols!(CSV.read(ind_file;delim=' ',
-                    header=[:b,:ind_id,:x,:y,:a,:z],allowmissing=:none),[:a,:b,:x,:y,:z]),
+    samples = join(deletecols!(CSV.read(ind_file;delim='\t',
+                    header=[:ind_id,:b],allowmissing=:none),[:b]),
                     samples,kind=:inner,on=:ind_id) #filter to just inds of interest
-    samples[:num_snps]
-    for item in filter(x -> occursin(r"(?i)\.txt\.gz", x), readdir(geno_dir))
+    println(first(samples,4))
+    for item in filter(x -> occursin(r"(?i)\.dos\.gz", x), readdir(geno_dir))
         println(item)
         for line in readlines(GZip.open("$geno_dir$item"))
-            push!(snps,["chr$(split(line,' ')[1])",parse(Int,split(line,' ')[3]),split(line,' ')[2],
-                        coverageRate(split(line,' ')[7:end],samples[:num_snps]),
-                        countSamples(split(line,' ')[7:end])])
+            push!(snps,["chr$(split(line,'\t')[1])",parse(Int,split(line,'\t')[3]),split(line,'\t')[2],
+                        coverageRate(split(line,'\t')[7:end],samples[:num_snps]),
+                        countSamples(split(line,'\t')[7:end])])
         end
     end
     snps[:start] = snps[:pos] .- 1
