@@ -37,7 +37,8 @@ AFRICA = ["Canary Islands", "Egypt", "Ethiopia","Kenya","Malawi", "Morocco",
 EXCLUDE = ["Ancestor.REF","Href.REF","Chimp.REF", "Gorilla.REF","Altai_snpAD.DG",
             "Denisova_snpAD.DG","Altai_published.DG","Denisova_published.DG",
             "Denisova11.SG","Vindija_snpAD.DG","VindijaG1_final.SG","Goyet_final_provisional.SG",
-            "Les_Cottes_final_provisional.SG","Mezmaiskaya1_final_provisional.SG","VindijaG1_final_provisional.SG"] #non-human ids in annotation file
+            "Les_Cottes_final_provisional.SG","Mezmaiskaya1_final_provisional.SG","VindijaG1_final_provisional.SG",
+            "Spy_final_provisional.SG","Mezmaiskaya2_final_provisional.SG"] #non-human ids in annotation file
 
 # parses Reich Lab sample annotation file
 function parseAnnoFile(anno_file::String)
