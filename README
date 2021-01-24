@@ -1,2 +1,126 @@
 scripts and data for ancient human predixcan project
 
+coordinates are all hg38. PrediXcan training scripts are adapted from those available here: https://github.com/hakyimlab/PredictDBPipeline
+
+Manifest:
+bin/
+  PrediXcan.py
+    predicts gene regulation using PrediXcan model databases.
+  calc_miss_prop.jl
+    calculates the proportion of missing SNPs in a set that are missing in dosage files
+  compare_by_group.jl
+    makes plots and runs kruskal-wallis statistics and others comparing predictions between groups of samples
+  convert_dbsnp_file.jl
+    converts files downloaded from dbsnp into annotation file for predixcan training
+  convert_plink_to_dosage.py
+    converts plink files to dosage for PrediXcan predictions
+  filter_predictions.jl
+    filters predixcan output by gene or by samples
+  gene_or.jl
+    calculates the enrichment of particular gene set in predictions
+  model_comparison.jl
+    compares sets of predixcan models
+  plot_enrichment.jl
+    plots enrichment results from web_gestalt
+  population_analyses.jl
+    population-level comparison of predictions. correlation between them, correlation with other metric (eg missing variant proportion)
+  predixcan_search.py
+    wrapper to search model databases for particular gene or variant
+  simulate_genomes.jl
+    creates downsampled 1kG genomes for simulating missing data
+  transpose_pred_output.jl
+    transposes raw predixcan output into final prediction files
+  update_rsIDs.py
+    makes sure ids in dosage files for predictions match those used during training
+  update_strands_hg38.jl
+    updates the ref/alt alleles that had strand flips between hg19 and hg38 by referencing the 1kG hg38 VCF files.
+  vcf2dosage.py
+    converts vcf genotype files to dosage files for predictions
+  
+  build_gene_models/
+    GTEx_Tissue_Wide_CV_elasticNet.R
+      Trains PrediXcan models. called by create_model.R
+    create_model.R
+      wrapper that organizes parameters for model training. called by slurm script.
+    model_parameters_1240k.py
+      parameter file read by processing and training scripts. for 1240k models.
+    model_parameters_top600k.py
+      parameter file read by processing and training scripts. for top600k models.
+    model_parameters_v8_all.py
+      parameter file read by processing and training scripts. for full models.
+    post_process_v8.py
+      wrapper that processes raw training output into sqlite databases
+    preprocess_v8.py
+      wrapper that processes genotype, snp, and expression data into the formats the training script expects.
+    train_model_by_chr.slurm
+      launches job array to train predictions. called by train_models_slurm.py
+    train_models_slurm.py
+      wrapper to launch slurm script once per tissues
+    
+  data_processing/
+    create_meta_data.py
+      called by preprocessing script.
+    expr_to_transposed_RDS_v8.R
+      parses input expression data for GTEx v8. called by preprocessing script.
+    filter_on_significance.R
+      filters sqlite databases for significant models. called by postprocessing script.
+    geno_annot_to_RDS.R
+      parses gene annotations. called by preprocessing script.
+    make_all_betas_v8.sh
+      called by postprocessing script.
+    make_all_covariances_v8.sh
+      called by postprocessing script.
+    make_all_logs_v8.sh
+      called by postprocessing script.
+    make_all_results_v8.sh
+      called by postprocessing script.
+    make_sqlite_db.py
+      converts raw training output to sqlite databases used by PrediXcan.py. called by postprocessing script.
+    parse_gtf_v8.py
+      parses gene annotations. called by preprocessing script.
+    snp_annot_to_RDS.R
+      parses input variant annotation. called by preprocessing script.
+    split_genotype_by_chr_v8.py
+      parses input genotypes. called by preprocessing script.
+    split_snp_annot_by_chr_v8.py
+      parses input variant annotation. called by preprocessing script.
+
+models/
+  1240k_snps_hg38_refFix.txt.gz
+    variants in aDNA samples. included in downsampled 1kG-1240k set, and to train the 140k models used for majority of analyses.
+  1240k_top500k_hg38.txt.gz
+    variants included in downsampled 1kG-top500k set
+  1240k_top600k_hg38.txt.gz
+    variants included in downsampled 1kG-top600k set and to train the top600k models
+  gtex_v8_vcfSNPs_hg38_refFix.txt.gz
+    variants used for training full models
+
+  1240k/
+    *.db 
+      sqlite databases containined all significant models trained with the 1240k variants.
+  full/
+    *.db 
+      sqlite databases containined all significant models trained with all GTEx variants
+  top600k/
+    *.db 
+      sqlite databases containined all significant models trained with the top600k variants.
+
+result_tables/
+  ALL_kw_pvalues_Agri_Past_HG.txt
+    median AIR for all 1240k models in all tissues in ancient Agriculturalists, pastoralists, and hunter-gatherers, and the Kruskal-Wallis test P-value
+  chen_selected_genes.txt
+    genes that have undergone longterm balancing selection on their expression
+  eisenberg13_housekeeping_ensemblhg19.bed
+    housekeeping gene set used for targeted enrichment analysis
+  gnomad_lof_intolerant_genes_0.35_upper.txt
+    loss-of-function intolerant genes from GNOMAD
+  rees_selected_diet_genes.txt
+    dietary genes with population-specific selection signals
+  reich_3rdq_africans.txt
+    sample information for ancient african samples used for FADS1 analysis
+  reich_3rdq_eurasians.txt
+    samples information for ancient eurasian samples used in lifestyle analyses
+    
+  adna_predictions/
+    *.full.gz
+      AIR for all genes in all tissues for all high-coverage (in 3rd quartile) ancient samples. subsetted by location and lifestyle for analyses in papers.
