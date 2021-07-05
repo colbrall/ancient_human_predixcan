@@ -9,7 +9,7 @@ bin/
   calc_miss_prop.jl
     calculates the proportion of missing SNPs in a set that are missing in dosage files
   compare_by_group.jl
-    makes plots and runs kruskal-wallis statistics and others comparing predictions between groups of samples
+    makes plots and runs kruskal-wallis statistics and others comparing predictions between groups of samples. Plots for Fig. 3A (inset), Fig 4, S7A, S8
   convert_dbsnp_file.jl
     converts files downloaded from dbsnp into annotation file for predixcan training
   convert_plink_to_dosage.py
@@ -19,11 +19,13 @@ bin/
   gene_or.jl
     calculates the enrichment of particular gene set in predictions
   model_comparison.jl
-    compares sets of predixcan models
+    compares sets of predixcan models, plots for Figs. 1B&C, S3, S5
+  qqplot.jl
+    given p-values, plots QQplot, with optional GC correction. Fig. 3A
   plot_enrichment.jl
-    plots enrichment results from web_gestalt
+    plots enrichment results from web_gestalt. Fig. 3B
   population_analyses.jl
-    population-level comparison of predictions. correlation between them, correlation with other metric (eg missing variant proportion)
+    population-level comparison of predictions. correlation between them, correlation with other metric (eg missing variant proportion). Figs. S2, S4
   predixcan_search.py
     wrapper to search model databases for particular gene or variant
   simulate_genomes.jl
@@ -123,4 +125,4 @@ result_tables/
     
   adna_predictions/
     *.full.gz
-      AIR for all genes in all tissues for all high-coverage (in 3rd quartile) ancient samples. subsetted by location and lifestyle for analyses in papers.
+      predicted for all genes in all tissues for all high-coverage (in 3rd quartile) ancient samples. subsetted by location and lifestyle for analyses in papers.
