@@ -344,7 +344,7 @@ function plotSwarm(pop_path::String,samp_path::String,mod_path::String,mod_list:
                 s_plot = Seaborn.boxplot(gene_res[[in(i,group_names) for i in gene_res[:groups]],:groups],
                                 gene_res[[in(i,group_names) for i in gene_res[:groups]],Symbol(l[1])])
                 s_plot = swarmplot(gene_res[[in(i,group_names) for i in gene_res[:groups]],:groups],
-                                gene_res[[in(i,group_names) for i in gene_res[:groups]],Symbol(l[1])],color=:black,alpha=0.5)
+                                gene_res[[in(i,group_names) for i in gene_res[:groups]],Symbol(l[1])],color=:black,alpha=0.5,size=2)
                 s_plot.set_title("$(l[1])")
                 s_plot.set_ylabel("Pred. Norm. Expr.")
                 Seaborn.savefig("$(l[1])_$(join(group_names,'_')).pdf")
