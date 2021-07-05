@@ -1,6 +1,7 @@
 # @author Laura Colbran
 # 2019-02-20
 # compares how well two sets of PrediXcan models match
+# ie on training metrics (R2, Num_SNPs)
 #
 # julia 1.1
 
@@ -8,12 +9,14 @@ using ArgParse
 using DataFrames
 using StatsBase
 using HypothesisTests
-using StatsPlots
+using StatsPlots,Seaborn
 using SQLite
 using GZip
 using CSV
 
 default(color=:blue,leg=false,grid=false,fontfamily="arial",alpha=0.5)
+Seaborn.set(style="white", color=:white)
+set_style(Dict("font.family" =>["DejaVu Sans"]))
 
 # parses command-line arguments
 function parse_commandline()
@@ -37,9 +40,6 @@ function parse_commandline()
         "--box"
             help = "to make plots of performance metrics"
             action = :store_true
-        # "--snps"
-        #     help = "to compare specific SNPs and their weights"
-        #     action = :store_true
         "--genomes","-g"
             help = "path to directory containing genomes"
             arg_type = String
@@ -241,10 +241,25 @@ function boxplots(ref_file::Array{String,1},db_files::Array{String,1})
         Plots.savefig(s_plot,"scatter_$(i)_comp.pdf")
         i+=1
     end
-    r2_plot = boxplot(r2_boxes[:set], r2_boxes[:R2],notch = true, ylabel="R2",xlabel= "Training Set",margin=10Plots.mm,outliers=false)
-    Plots.savefig(r2_plot,"boxes_r2.pdf")
-    nsnps_plot = boxplot(nsnps_boxes[:set], nsnps_boxes[:nsnps],notch = true, ylabel="N_SNPs",xlabel= "Training Set",margin=10Plots.mm,outliers=false)
-    Plots.savefig(nsnps_plot,"boxes_nsnps.pdf")
+#    r2_plot = boxplot(r2_boxes[:set], r2_boxes[:R2],notch = true, ylabel="R2",xlabel= "Training Set",margin=10Plots.mm,outliers=false)
+#    Plots.savefig(r2_plot,"boxes_r2.pdf")
+#    nsnps_plot = boxplot(nsnps_boxes[:set], nsnps_boxes[:nsnps],notch = true, ylabel="N_SNPs",xlabel= "Training Set",margin=10Plots.mm,outliers=false)
+#    Plots.savefig(nsnps_plot,"boxes_nsnps.pdf")
+
+     r2_plot = Seaborn.boxplot(x=r2_boxes[:set],y=r2_boxes[:R2])
+     r2_plot = Seaborn.swarmplot(x=r2_boxes[:set],y=r2_boxes[:R2],color=:black,alpha=0.5,size=2)
+     r2_plot.set_ylabel("R2")
+     r2_plot.set_ylabel("Training Set")
+     Seaborn.savefig("boxes_r2.pdf")
+     clf()
+
+     nsnps_plot = Seaborn.boxplot(x=nsnps_boxes[:set],y=nsnps_boxes[:nsnps])
+     nsnps_plot = Seaborn.swarmplot(x=nsnps_boxes[:set],y=nsnps_boxes[:nsnps],color=:black,alpha=0.5,size=2)
+     nsnps_plot.set_ylabel("Num. SNPs")
+     nsnps_plot.set_ylabel("Training Set")
+     Seaborn.savefig("boxes_nsnps.pdf")
+     clf()
+
     for lab in unique(r2_boxes[:set])
         println("$lab R2:")
         describe(r2_boxes[r2_boxes[:set].==lab,:R2])
