@@ -41,8 +41,8 @@ end
 function calcMiss(pop_dir::String, samples::String, miss::Int64, outf::String,postfix::String)
     df = CSV.read(samples; delim = "\t", header=[:ind_id, :fam_id])
     deletecols!(df,:fam_id)
-    num_miss = fill(0,nrow(df))
     total_snps = miss #zero if I shouldn't be counting any snps not in these dosage files.
+    num_miss = fill(total_snps,nrow(df))
     for item in readdir(pop_dir)
         if !endswith(item, postfix) continue end
         println(item)
