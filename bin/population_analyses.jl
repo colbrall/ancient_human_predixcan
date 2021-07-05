@@ -14,12 +14,12 @@ using Distances
 using RCall
 using StatsBase
 using Statistics
-using StatsPlots
-using Plots
+using StatsPlots,Plots,Seaborn
 using HypothesisTests
 
 default(color=:blue,leg=false,grid=false,fontfamily="arial",alpha=0.5)
-#using PyPlot
+Seaborn.set(style="white")
+set_style(Dict("font.family" =>["DejaVu Sans"]))
 
 const DENDRO_SOURCE =
         "/dors/capra_lab/projects/neanderthal_predixcan/bin/WriteDendrogram.R"
@@ -233,6 +233,7 @@ function indSim(base_pop::String,pop_dir::Array{String,1})
     map_dict = mapNames()::Dict{String,String}
     corr_df = DataFrame(comp_pop = String[], base_ind = String[], sim_ind = String[], tiss = String[], rho = Float64[],r = Float64[])
     for tiss in keys(map_dict)
+        if !in(tiss,["liver","muscle_skeletal","ovary","whole_blood"]) continue end
         base = readGeneDF("$(realpath(base_pop))/$(map_dict[tiss])_elasticNet0_0.5.full.gz")
         if base == "NA" continue end
         for pop_file in pop_dir
@@ -249,15 +250,29 @@ function indSim(base_pop::String,pop_dir::Array{String,1})
             end
         end
     end
-    comp_plot = boxplot(corr_df[:comp_pop], corr_df[:rho],notch = true, ylabel="Rho",xlabel= "Comparison Populations",margin=10Plots.mm,ylims=[0,1])
+#    comp_plot = Plots.boxplot(corr_df[:comp_pop], corr_df[:rho],notch = true, ylabel="Rho",xlabel= "Comparison Populations",margin=10Plots.mm,ylims=[0,1])
     #tight_layout()
-    Plots.savefig(comp_plot, "pop_corrspearman_box.pdf")
+#    Plots.savefig(comp_plot, "pop_corrspearman_box.pdf")
+
+    comp_plot = Seaborn.boxplot(x=corr_df[:comp_pop],y=corr_df[:rho])
+    comp_plot = Seaborn.swarmplot(x=corr_df[:comp_pop],y=corr_df[:rho],color=:black,alpha=0.5,size=2)
+    comp_plot.set_ylabel("Rho")
+    comp_plot.set_xlabel("Comparison Population")
+    Seaborn.savefig("pop_corrspearman_box.pdf")
+    clf()
     for p in unique(corr_df[:comp_pop])
         println("$p:")
         describe(corr_df[corr_df[:comp_pop] .== p,:rho])
+        # comp_plot = Seaborn.boxplot(x=corr_df[:comp_pop],y=corr_df[:rho])
+        # comp_plot = Seaborn.swarmplot(x=corr_df[:comp_pop],y=corr_df[:rho],color=:black,alpha=0.5,size=2)
+        # comp_plot.set_ylabel("Pred. Reg")
+        # comp_plor.set_xlabel("Pred. Reg. $p")
+        # Seaborn.savefig("pop_corrspearman_$(p).pdf")
+        # clf()
     end
-    comp_plot = boxplot(corr_df[:comp_pop], corr_df[:r],notch = true, ylabel="Pearson r",xlabel= "Comparison Populations",margin=10Plots.mm)#,ylims=[0,1])
-    Plots.savefig(comp_plot, "pop_corrpearson_box.pdf")
+#    comp_plot = Plots.boxplot(corr_df[:comp_pop], corr_df[:r],notch = true, ylabel="Pearson r",xlabel= "Comparison Populations",margin=10Plots.mm)#,ylims=[0,1])
+#    Plots.savefig(comp_plot, "pop_corrpearson_box.pdf")
+
 end
 
 #correlation across genes by threshold distribution
@@ -325,10 +340,30 @@ function matchCorr(base_pop::String,pop_dir::Array{String,1},miss_prop::String,i
     println("Spearman rho : $rho; $(OneSampleZTest(atanh(rho), 1, nrow(corr_df)))")
     println("\nCorr summary:")
     describe(corr_df[:rho])
-    @df corr_df boxplot(:all,:rho,notch = true,xlabel="",ylabel = "Rho")
-    StatsPlots.savefig("reich_sim_rho_dist_all.pdf")
-    @df corr_df boxplot(:tiss,:rho,notch = true,xlabel="Tissue",ylabel = "Rho")
-    StatsPlots.savefig("reich_sim_rho_dist_tiss.pdf")
+    corr_plot = Seaborn.boxplot(x=corr_df[:tiss],y=corr_df[:rho])
+    corr_plot.set_xlabel("Tissue")
+    corr_plot.set_ylabel("Rho by Individual")
+    Seaborn.savefig("reich_sim_rho_dist_tiss.pdf")
+    colours = [:firebrick,:dodgerblue,:darkgreen,:black]
+    c=1
+    clf()
+    for t in unique(corr_df[:tiss])
+        corr_plot = Seaborn.kdeplot(corr_df[corr_df[:tiss].== t,:rho],color=colours[c])
+        c +=1
+    end
+    corr_plot.set_xlabel("Rho by Individual")
+    Seaborn.savefig("reich_sim_rho_dist_all.pdf")
+    clf()
+    c=1
+    for t in unique(corr_df[:tiss])
+        println(t)
+        corr_plot = Seaborn.scatter(x=corr_df[corr_df[:tiss].== t,:prop_miss],y=corr_df[corr_df[:tiss].== t,:rho],color=colours[c],alpha=0.25)
+        c +=1
+    end
+    # corr_plot.set_xlabel("Proportion Missing from Genome")
+    # corr_plot.set_ylabel("Rho by Individual")
+    Seaborn.savefig("reich_sim_rho_miss_corr.pdf")
+    clf()
 end
 
 function main()
