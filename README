@@ -1,4 +1,5 @@
 scripts and data for ancient human predixcan project
+project write-up on BioRxiv: https://doi.org/10.1101/2021.07.05.451164 
 
 coordinates are all hg38. PrediXcan training scripts are adapted from those available here: https://github.com/hakyimlab/PredictDBPipeline
 
