@@ -32,12 +32,13 @@ function main()
     enrichments = CSV.read(parsed_args["enr_file"];delim='\t')
     println(names(enrichments))
 #    enrichments[:log] = [-log(10,x) for x in enrichments[Symbol("P Value")]]
+    enrichments[:pValue] = enrichments[:pValue] .+ 0.00001
     enrichments[:log] = [-log(10,x) for x in enrichments[Symbol("pValue")]]
-    # println(first(enrichments,6))
+    println(enrichments[:,[1,2,4,5,6,13]])
 
-#    e_plot = Seaborn.scatter(enrichments[:normalizedEnrichmentScore],enrichments[:log],sizes=enrichments[:size],
-#                color=:black)
-    e_plot = Seaborn.scatter(enrichments[:enrichmentRatio],enrichments[:log],sizes=enrichments[:overlap],color=:black)
+    e_plot = Seaborn.scatter(enrichments[:normalizedEnrichmentScore],enrichments[:log],sizes=enrichments[:size],
+                color=:black,alpha=0.25)
+#    e_plot = Seaborn.scatter(enrichments[:enrichmentRatio],enrichments[:log],sizes=enrichments[:overlap],color=:black,alpha=0.5)
     Seaborn.xlabel("O/E Enrichment Ratio")
     Seaborn.ylabel("-log10(P Value)")
     # Seaborn.despine()
